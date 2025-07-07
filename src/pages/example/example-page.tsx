@@ -1,5 +1,7 @@
 // src/pages/example/example-page.tsx
 import { useEffect, useMemo, useState } from 'react';
+// import { zodResolver } from '@hookform/resolvers/zod';
+// import { RiCheckboxCircleFill } from '@remixicon/react';
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -21,9 +23,13 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+// import { useForm } from 'react-hook-form';
+// import { toast } from 'sonner';
+// import { z } from 'zod';
 import highlightMatch from '@/lib/dataFilters';
 import { cn } from '@/lib/utils';
 import { PaymentStatus, Vehicle, vehicles } from '@/lib/vehicles';
+// import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -47,6 +53,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import DialogDemo from './DialogDemo';
 
 export function ExamplePage() {
   const [data, setData] = useState<Vehicle[]>([]);
@@ -61,6 +68,8 @@ export function ExamplePage() {
   const [buyNowFilter, setBuyNowFilter] = useState<
     'all' | 'buyNow' | 'auction'
   >('all');
+  const [open, setOpen] = useState(false);
+  const [linked, setLinked] = useState(false);
 
   const paid = vehicles.filter((v) => v.paymentStatus === 'paid').length;
   const partial = vehicles.filter((v) => v.paymentStatus === 'partial').length;
@@ -359,9 +368,14 @@ export function ExamplePage() {
             <div className="flex space-x-2 items-center">
               {showDollarButton && (
                 <button
-                  onClick={() =>
-                    alert(`Collecting payment for VIN: ${row.original.vin}`)
-                  }
+                  onClick={() => {
+                    setOpen(true);
+                    if (row.original.paymentStatus === 'unpaid') {
+                      setLinked(false);
+                    } else {
+                      setLinked(true);
+                    }
+                  }}
                   className="p-2 rounded-md bg-green-100 text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all duration-200"
                   title="Collect Payment"
                 >
@@ -888,6 +902,8 @@ export function ExamplePage() {
             </div>
           </DataGrid>
         </DataGridContainer>
+        {/* {Dialog Demo} */}
+        <DialogDemo open={open} setOpen={setOpen} linked={linked} />
       </div>
     </>
   );
