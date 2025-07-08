@@ -13,7 +13,7 @@ function highlightMatch(
     <>
       {parts.map((part, index) =>
         part.toLowerCase() === searchTerm.toLowerCase() ? (
-          <span key={index} className="bg-yellow-200 font-semibold">
+          <span key={index} className="bg-yellow-200 dark:bg-yellow-800 font-semibold">
             {part}
           </span>
         ) : (

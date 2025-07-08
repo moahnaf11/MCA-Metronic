@@ -40,9 +40,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
-import { DataGridPagination } from '@/components/ui/data-grid-pagination';
-import { DataGridTable } from '@/components/ui/data-grid-table';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -143,23 +140,23 @@ export function ExamplePage() {
                 <TooltipContent
                   side="right"
                   sideOffset={20}
-                  className=" bg-white shadow-lg rounded-md"
+                  className="shadow-lg rounded-md p-0"
                 >
-                  <Card className="min-w-[500px]">
+                  <Card className="min-w-[500px] rounded-md">
                     <CardHeader>
                       <CardHeading>
                         <CardTitle className="text-lg">Car Details</CardTitle>
                       </CardHeading>
                     </CardHeader>
-                    <CardContent className="">
+                    <CardContent>
                       <div className="space-y-2">
                         <div className="flex items-center space-x-3">
                           <Calendar className="w-4 h-4 text-blue-500" />
                           <div>
-                            <span className="text-lg text-gray-500 uppercase tracking-wide">
+                            <span className="text-lg uppercase tracking-wide">
                               Year
                             </span>
-                            <p className="text-lg font-semibold text-gray-800">
+                            <p className="text-lg font-semibold">
                               {row.original.year}
                             </p>
                           </div>
@@ -168,10 +165,10 @@ export function ExamplePage() {
                         <div className="flex items-center space-x-3">
                           <Car className="w-4 h-4 text-green-500" />
                           <div>
-                            <span className="text-lg text-gray-500 uppercase tracking-wide">
+                            <span className="text-lg uppercase tracking-wide">
                               Make & Model
                             </span>
-                            <p className="text-lg font-semibold text-gray-800">
+                            <p className="text-lg font-semibold">
                               {row.original.make} {row.original.model}
                             </p>
                           </div>
@@ -180,10 +177,10 @@ export function ExamplePage() {
                         <div className="flex items-center space-x-3">
                           <Palette className="w-4 h-4 text-purple-500" />
                           <div>
-                            <span className="text-lg text-gray-500 uppercase tracking-wide">
+                            <span className="text-lg uppercase tracking-wide">
                               Color
                             </span>
-                            <p className="text-lg font-semibold text-gray-800">
+                            <p className="text-lg font-semibold">
                               {row.original.color}
                             </p>
                           </div>
@@ -192,10 +189,10 @@ export function ExamplePage() {
                         <div className="flex items-center space-x-3">
                           <User className="w-4 h-4 text-orange-500" />
                           <div>
-                            <span className="text-lg text-gray-500 uppercase tracking-wide">
+                            <span className="text-lg uppercase tracking-wide">
                               Owner/Seller
                             </span>
-                            <p className="text-lg font-semibold text-gray-800">
+                            <p className="text-lg font-semibold">
                               {row.original.owner}
                             </p>
                           </div>
@@ -564,348 +561,339 @@ export function ExamplePage() {
               onClick={() => {
                 setShowCarDetails((prev) => !prev);
               }}
-              className="text-lg text-black"
+              className="text-lg"
               variant="secondary"
             >
               {showCarDetails ? 'Hide Car Details' : 'Show Car Details'}
             </Button>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Rows per page:</span>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
-                className="p-2 border border-gray-300 rounded-md"
+              <span className="text-sm">Rows per page:</span>
+              <Select
+                value={String(table.getState().pagination.pageSize)}
+                onValueChange={(value) => table.setPageSize(Number(value))}
               >
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <option key={pageSize} value={pageSize}>
-                    {pageSize}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="Rows per page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={String(pageSize)}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
 
-        <DataGridContainer className="shadow-md">
-          <DataGrid table={table} recordCount={data.length} isLoading={loading}>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <th
-                          key={header.id}
-                          colSpan={header.colSpan}
-                          className={cn(
-                            'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none',
-                            header.column.getCanSort()
-                              ? 'hover:bg-gray-100'
-                              : '',
-                          )}
-                          onClick={header.column.getToggleSortingHandler()}
+        <DataGrid table={table} recordCount={data.length} isLoading={loading}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        className={cn(
+                          'px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none',
+                        )}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {header.isPlaceholder ? null : (
+                          <div className="flex items-center">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                            {{
+                              asc: ' 🔼',
+                              desc: ' 🔽',
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </div>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="">
+                <tr>
+                  <td></td>
+                  {/* for 'id' column or any column you want to keep blank */}
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table.getColumn('run')?.getFilterValue() as string) ??
+                        ''
+                      }
+                      onChange={(e) =>
+                        table.getColumn('run')?.setFilterValue(e.target.value)
+                      }
+                      className="input-class"
+                      placeholder="Run"
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table.getColumn('vin')?.getFilterValue() as string) ??
+                        ''
+                      }
+                      onChange={(e) =>
+                        table.getColumn('vin')?.setFilterValue(e.target.value)
+                      }
+                      placeholder="VIN"
+                    />
+                  </td>
+                  {showCarDetails && (
+                    <td className="px-6 py-3">
+                      <input
+                        type="number"
+                        value={
+                          (table
+                            .getColumn('year')
+                            ?.getFilterValue() as string) ?? ''
+                        }
+                        onChange={(e) =>
+                          table
+                            .getColumn('year')
+                            ?.setFilterValue(e.target.value)
+                        }
+                        placeholder="Year"
+                      />
+                    </td>
+                  )}
+                  {showCarDetails && (
+                    <td className="px-6 py-3">
+                      <input
+                        type="text"
+                        value={
+                          (table
+                            .getColumn('make')
+                            ?.getFilterValue() as string) ?? ''
+                        }
+                        onChange={(e) =>
+                          table
+                            .getColumn('make')
+                            ?.setFilterValue(e.target.value)
+                        }
+                        placeholder="Make"
+                      />
+                    </td>
+                  )}
+                  {showCarDetails && (
+                    <td className="px-6 py-3">
+                      <input
+                        type="text"
+                        value={
+                          (table
+                            .getColumn('model')
+                            ?.getFilterValue() as string) ?? ''
+                        }
+                        onChange={(e) =>
+                          table
+                            .getColumn('model')
+                            ?.setFilterValue(e.target.value)
+                        }
+                        placeholder="Model"
+                      />
+                    </td>
+                  )}
+
+                  {showCarDetails && (
+                    <td className="px-6 py-3">
+                      <input
+                        type="text"
+                        value={
+                          (table
+                            .getColumn('color')
+                            ?.getFilterValue() as string) ?? ''
+                        }
+                        onChange={(e) =>
+                          table
+                            .getColumn('color')
+                            ?.setFilterValue(e.target.value)
+                        }
+                        placeholder="Color"
+                      />
+                    </td>
+                  )}
+                  {showCarDetails && (
+                    <td className="px-6 py-3">
+                      <input
+                        type="text"
+                        value={
+                          (table
+                            .getColumn('owner')
+                            ?.getFilterValue() as string) ?? ''
+                        }
+                        onChange={(e) =>
+                          table
+                            .getColumn('owner')
+                            ?.setFilterValue(e.target.value)
+                        }
+                        placeholder="Company/Owner"
+                      />
+                    </td>
+                  )}
+                  <td></td>
+                  {!showCarDetails && <td></td>}
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table
+                          .getColumn('auction')
+                          ?.getFilterValue() as string) ?? ''
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn('auction')
+                          ?.setFilterValue(e.target.value)
+                      }
+                      placeholder="Auction"
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <input
+                      type="date"
+                      value={
+                        (table.getColumn('date')?.getFilterValue() as string) ??
+                        ''
+                      }
+                      onChange={(e) =>
+                        table.getColumn('date')?.setFilterValue(e.target.value)
+                      }
+                      placeholder="Date"
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table
+                          .getColumn('paddle')
+                          ?.getFilterValue() as string) ?? ''
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn('paddle')
+                          ?.setFilterValue(e.target.value)
+                      }
+                      placeholder="Paddle"
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table
+                          .getColumn('buyerId')
+                          ?.getFilterValue() as string) ?? ''
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn('buyerId')
+                          ?.setFilterValue(e.target.value)
+                      }
+                      placeholder="Buyer ID"
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table
+                          .getColumn('customerName')
+                          ?.getFilterValue() as string) ?? ''
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn('customerName')
+                          ?.setFilterValue(e.target.value)
+                      }
+                      placeholder="Buyer Name"
+                    />
+                  </td>
+                  <td className="px-6 py-3">
+                    <input
+                      type="text"
+                      value={
+                        (table
+                          .getColumn('invoiceNumber')
+                          ?.getFilterValue() as string) ?? ''
+                      }
+                      onChange={(e) =>
+                        table
+                          .getColumn('invoiceNumber')
+                          ?.setFilterValue(e.target.value)
+                      }
+                      placeholder="Invoice ID"
+                    />
+                  </td>
+                  <td>{/* actions or blank */}</td>
+                </tr>
+
+                {table.getRowModel().rows.length === 0 && !loading ? (
+                  <tr>
+                    <td
+                      colSpan={columns.length}
+                      className="px-6 py-4 text-center"
+                    >
+                      No matching records found.
+                    </td>
+                  </tr>
+                ) : (
+                  table.getRowModel().rows.map((row) => (
+                    <tr key={row.id} className="">
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-6 py-4 whitespace-nowrap text-sm"
                         >
-                          {header.isPlaceholder ? null : (
-                            <div className="flex items-center">
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                              {{
-                                asc: ' 🔼',
-                                desc: ' 🔽',
-                              }[header.column.getIsSorted() as string] ?? null}
-                            </div>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
                           )}
-                        </th>
+                        </td>
                       ))}
                     </tr>
-                  ))}
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td></td>
-                    {/* for 'id' column or any column you want to keep blank */}
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('run')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table.getColumn('run')?.setFilterValue(e.target.value)
-                        }
-                        className="input-class"
-                        placeholder="Run"
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('vin')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table.getColumn('vin')?.setFilterValue(e.target.value)
-                        }
-                        placeholder="VIN"
-                      />
-                    </td>
-                    {showCarDetails && (
-                      <td className="px-6 py-3">
-                        <input
-                          type="number"
-                          value={
-                            (table
-                              .getColumn('year')
-                              ?.getFilterValue() as string) ?? ''
-                          }
-                          onChange={(e) =>
-                            table
-                              .getColumn('year')
-                              ?.setFilterValue(e.target.value)
-                          }
-                          placeholder="Year"
-                        />
-                      </td>
-                    )}
-                    {showCarDetails && (
-                      <td className="px-6 py-3">
-                        <input
-                          type="text"
-                          value={
-                            (table
-                              .getColumn('make')
-                              ?.getFilterValue() as string) ?? ''
-                          }
-                          onChange={(e) =>
-                            table
-                              .getColumn('make')
-                              ?.setFilterValue(e.target.value)
-                          }
-                          placeholder="Make"
-                        />
-                      </td>
-                    )}
-                    {showCarDetails && (
-                      <td className="px-6 py-3">
-                        <input
-                          type="text"
-                          value={
-                            (table
-                              .getColumn('model')
-                              ?.getFilterValue() as string) ?? ''
-                          }
-                          onChange={(e) =>
-                            table
-                              .getColumn('model')
-                              ?.setFilterValue(e.target.value)
-                          }
-                          placeholder="Model"
-                        />
-                      </td>
-                    )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-                    {showCarDetails && (
-                      <td className="px-6 py-3">
-                        <input
-                          type="text"
-                          value={
-                            (table
-                              .getColumn('color')
-                              ?.getFilterValue() as string) ?? ''
-                          }
-                          onChange={(e) =>
-                            table
-                              .getColumn('color')
-                              ?.setFilterValue(e.target.value)
-                          }
-                          placeholder="Color"
-                        />
-                      </td>
-                    )}
-                    {showCarDetails && (
-                      <td className="px-6 py-3">
-                        <input
-                          type="text"
-                          value={
-                            (table
-                              .getColumn('owner')
-                              ?.getFilterValue() as string) ?? ''
-                          }
-                          onChange={(e) =>
-                            table
-                              .getColumn('owner')
-                              ?.setFilterValue(e.target.value)
-                          }
-                          placeholder="Company/Owner"
-                        />
-                      </td>
-                    )}
-                    <td></td>
-                    {!showCarDetails && <td></td>}
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('auction')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('auction')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Auction"
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        type="date"
-                        value={
-                          (table
-                            .getColumn('date')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('date')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Date"
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('paddle')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('paddle')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Paddle"
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('buyerId')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('buyerId')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Buyer ID"
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('customerName')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('customerName')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Buyer Name"
-                      />
-                    </td>
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('invoiceNumber')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('invoiceNumber')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Invoice ID"
-                      />
-                    </td>
-                    <td>{/* actions or blank */}</td>
-                  </tr>
-
-                  {table.getRowModel().rows.length === 0 && !loading ? (
-                    <tr>
-                      <td
-                        colSpan={columns.length}
-                        className="px-6 py-4 text-center text-gray-500"
-                      >
-                        No matching records found.
-                      </td>
-                    </tr>
-                  ) : (
-                    table.getRowModel().rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className="hover:bg-gray-50 transition-colors duration-150"
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <td
-                            key={cell.id}
-                            className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-white rounded-b-lg">
-              <button
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                Previous
-              </button>
-              <span className="text-sm text-gray-700">
-                Page{' '}
-                <strong>
-                  {table.getState().pagination.pageIndex + 1} of{' '}
-                  {table.getPageCount()}
-                </strong>
-              </span>
-              <button
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              >
-                Next
-              </button>
-            </div>
-          </DataGrid>
-        </DataGridContainer>
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between p-4 border-t border-gray-200 rounded-b-lg">
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Previous
+            </button>
+            <span className="text-sm">
+              Page{' '}
+              <strong>
+                {table.getState().pagination.pageIndex + 1} of{' '}
+                {table.getPageCount()}
+              </strong>
+            </span>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Next
+            </button>
+          </div>
+        </DataGrid>
 
         {/* {Dialog Demo} */}
         <DialogDemo open={open} setOpen={setOpen} linked={linked} />

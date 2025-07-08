@@ -44,6 +44,7 @@ import {
 } from '@/pages/auth';
 import { DefaultPage, Demo1DarkSidebarPage } from '@/pages/dashboards';
 import { ExamplePage } from '@/pages/example';
+import { ArchivedPage } from '@/pages/archived/archived';
 import {
   NetworkAppRosterPage,
   NetworkAuthorPage,
@@ -102,7 +103,8 @@ export function AppRoutingSetup() {
         <Route element={<Demo1Layout />}>
           <Route path="/" element={<DefaultPage />} />
           <Route path="/dark-sidebar" element={<Demo1DarkSidebarPage />} />
-          <Route path="/sold-vehicles" element={<ExamplePage />} />{' '}
+          <Route path="/sold-vehicles" element={<ExamplePage />} />
+          <Route path="/archived" element={<ArchivedPage />} />
           {/* Add your route */}
           <Route
             path="/public-profile/profiles/default/"

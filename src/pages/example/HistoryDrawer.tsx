@@ -22,8 +22,8 @@ export default function HistoryDrawer({
   drawerOpen: boolean;
   setDrawerOpen: (drawerOpen: boolean) => void;
   selectedRow: Vehicle | null;
-  setLinked: (linked: boolean) => void;
-  setOpen: (open: boolean) => void;
+  setLinked?: (linked: boolean) => void;
+  setOpen?: (open: boolean) => void;
 }) {
   return (
     <Drawer
@@ -69,7 +69,7 @@ export default function HistoryDrawer({
                   {groupIndex < historyGroups.length - 1 && (
                     <div className="flex items-center my-6">
                       <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
-                      <div className="px-4 text-xs text-gray-500 font-medium bg-white">
+                      <div className="px-4 text-xs font-medium">
                         Next Session
                       </div>
                       <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
@@ -104,8 +104,8 @@ export default function HistoryDrawer({
             <div className="flex mt-4 text-sm justify-center gap-3">
               <Button
                 onClick={() => {
-                  setLinked(selectedRow.paymentStatus === 'partial');
-                  setOpen(true);
+                  setLinked?.(selectedRow.paymentStatus === 'partial');
+                  setOpen?.(true);
                 }}
               >
                 Add payment
