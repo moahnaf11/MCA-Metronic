@@ -40,6 +40,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
+import { DataGridPagination } from '@/components/ui/data-grid-pagination';
+import { DataGridTable } from '@/components/ui/data-grid-table';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -54,6 +57,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import DialogDemo from './DialogDemo';
+import HistoryDrawer from './HistoryDrawer';
 
 export function ExamplePage() {
   const [data, setData] = useState<Vehicle[]>([]);
@@ -69,7 +73,9 @@ export function ExamplePage() {
     'all' | 'buyNow' | 'auction'
   >('all');
   const [open, setOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [linked, setLinked] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<Vehicle | null>(null);
 
   const paid = vehicles.filter((v) => v.paymentStatus === 'paid').length;
   const partial = vehicles.filter((v) => v.paymentStatus === 'partial').length;
@@ -318,33 +324,31 @@ export function ExamplePage() {
       {
         accessorKey: 'paymentStatus',
         header: 'Payment Status',
-        cell: (info) => {
-          const status = info.getValue() as PaymentStatus;
-          let bgColor = '';
-          let textColor = '';
-          switch (status) {
-            case 'paid':
-              bgColor = 'bg-green-100';
-              textColor = 'text-green-800';
-              break;
-            case 'partial':
-              bgColor = 'bg-yellow-100';
-              textColor = 'text-yellow-800';
-              break;
-            case 'unpaid':
-              bgColor = 'bg-red-100';
-              textColor = 'text-red-800';
-              break;
-            default:
-              bgColor = 'bg-gray-100';
-              textColor = 'text-gray-800';
-          }
+        cell: ({ row, getValue }) => {
+          const status = getValue() as PaymentStatus;
+
+          const statusStyles = {
+            paid: { bg: 'bg-green-100', text: 'text-green-800' },
+            partial: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+            unpaid: { bg: 'bg-red-100', text: 'text-red-800' },
+          };
+
+          const { bg = 'bg-gray-100', text = 'text-gray-800' } =
+            statusStyles[status] || {};
+
           return (
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
+            <button
+              type="button"
+              onClick={() => {
+                if (row.original.paymentStatus !== 'unpaid') {
+                  setSelectedRow(row.original);
+                  setDrawerOpen(true);
+                }
+              }}
+              className={`px-2 py-1 rounded-full text-xs font-medium ${bg} ${text} hover:opacity-80 transition`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
-            </span>
+            </button>
           );
         },
         enableSorting: false,
@@ -902,8 +906,17 @@ export function ExamplePage() {
             </div>
           </DataGrid>
         </DataGridContainer>
+
         {/* {Dialog Demo} */}
         <DialogDemo open={open} setOpen={setOpen} linked={linked} />
+        {/* History Drawer */}
+        <HistoryDrawer
+          setOpen={setOpen}
+          drawerOpen={drawerOpen}
+          setDrawerOpen={setDrawerOpen}
+          selectedRow={selectedRow}
+          setLinked={setLinked}
+        />
       </div>
     </>
   );
