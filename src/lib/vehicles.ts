@@ -168,31 +168,31 @@ const customerOptions = [
   {
     value: 'john-doe',
     label: 'John Doe',
-    paddle: 'P123',
+    paddle: '123',
     mobile: '0501234567',
   },
   {
     value: 'jane-smith',
     label: 'Jane Smith',
-    paddle: 'P456',
+    paddle: '456',
     mobile: '0509876543',
   },
   {
     value: 'bob-johnson',
     label: 'Bob Johnson',
-    paddle: 'P789',
+    paddle: '789',
     mobile: '0502468135',
   },
   {
     value: 'alice-brown',
     label: 'Alice Brown',
-    paddle: 'P321',
+    paddle: '321',
     mobile: '0501122334',
   },
   {
     value: 'charlie-wilson',
     label: 'Charlie Wilson',
-    paddle: 'P654',
+    paddle: '654',
     mobile: '0509988776',
   },
 ];

@@ -61,7 +61,7 @@ export default function DialogDemo({
         <AlertIcon>
           <RiCheckboxCircleFill />
         </AlertIcon>
-        <AlertTitle>Your feedback successfully submitted</AlertTitle>
+        <AlertTitle>{linked ? "Payment received successfully" : "Customer linked and payment received successfully"}</AlertTitle>
       </Alert>
     ));
 
