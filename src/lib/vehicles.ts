@@ -24,12 +24,24 @@ interface Vehicle {
   receivedPaymentBy: string | null;
   linkedBy: string | undefined;
   invoiceNumber: string;
+  gatePassStatus?:
+    | 'Gate Pass Created'
+    | 'Gate Pass Not Created'
+    | 'Left Out'
+    | null;
 }
 
 // Reusable Icon components for clarity and reusability
 
 // Reusable Button Component
 type PaymentStatus = 'paid' | 'partial' | 'unpaid';
+export const gatePassStatusOptions = [
+  'Gate Pass Created',
+  'Gate Pass Not Created',
+  'Left Out',
+] as const;
+
+type GatePassStatus = (typeof gatePassStatusOptions)[number];
 
 const vehicles: Vehicle[] = [
   {
@@ -58,6 +70,7 @@ const vehicles: Vehicle[] = [
     linkedBy: '',
     gatePass: 'G-12345',
     invoiceNumber: 'INV-1234567',
+    gatePassStatus: 'Gate Pass Created',
   },
 
   ...Array.from({ length: 50 }, (_, i) => {
@@ -75,6 +88,10 @@ const vehicles: Vehicle[] = [
             'David Wilson',
           ][Math.floor(Math.random() * 5)]
         : null;
+    const gatePassStatus =
+      paymentStatus === 'paid'
+        ? gatePassStatusOptions[Math.floor(Math.random() * 3)]
+        : null;
 
     const invoiceNumber =
       paymentStatus === 'paid' || paymentStatus === 'partial'
@@ -91,6 +108,7 @@ const vehicles: Vehicle[] = [
       run: Math.floor(Math.random() * 200) + 1,
       lin: Math.floor(Math.random() * 80000) + 60000,
       invoiceNumber,
+      gatePassStatus,
       gatePass,
       vin: `VIN${String(i + 9).padStart(13, '0')}`,
       year: 2010 + Math.floor(Math.random() * 15),
@@ -198,4 +216,4 @@ const customerOptions = [
 ];
 
 export { vehicles, customerOptions };
-export type { Vehicle, PaymentStatus };
+export type { Vehicle, PaymentStatus, GatePassStatus };

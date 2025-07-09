@@ -22,7 +22,12 @@ import {
 } from 'lucide-react';
 import { Helmet } from 'react-helmet';
 import highlightMatch from '@/lib/dataFilters';
-import { PaymentStatus, Vehicle, vehicles } from '@/lib/vehicles';
+import {
+  GatePassStatus,
+  gatePassStatusOptions,
+  Vehicle,
+  vehicles,
+} from '@/lib/vehicles';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -50,13 +55,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import HistoryDrawer from '../example/HistoryDrawer';
+import GatePassDialog from './GatePassDialog';
 
 export function ArchivedPage() {
   const [data, setData] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 25,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
@@ -73,6 +79,7 @@ export function ArchivedPage() {
     color: false,
     owner: false,
   });
+  const [qropen, setQrOpen] = useState(false);
 
   const globalFilterFn = (row: Row<Vehicle>, columnId, filterValue: string) => {
     const searchableFields: (keyof Vehicle)[] = [
@@ -321,15 +328,51 @@ export function ArchivedPage() {
         enableSorting: false,
       },
       {
-        accessorKey: 'paymentStatus',
-        header: 'Payment Status',
+        accessorKey: 'soldPrice',
+        header: 'Sold Price',
+        cell: (info) => `$${(info.getValue() as number).toLocaleString()}`,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'gatePassStatus',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Gate Pass Status"
+            filter={
+              <Select
+                value={column.getFilterValue() as string}
+                defaultValue="all"
+                onValueChange={(value) =>
+                  column.setFilterValue(value === 'all' ? undefined : value)
+                }
+              >
+                <SelectTrigger className="">
+                  <SelectValue placeholder="Filter Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {gatePassStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            }
+          />
+        ),
+        filterFn: 'equalsString',
         cell: ({ row, getValue }) => {
-          const status = getValue() as PaymentStatus;
+          const status = getValue() as GatePassStatus;
 
           const statusStyles = {
-            paid: { bg: 'bg-green-100', text: 'text-green-800' },
-            partial: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
-            unpaid: { bg: 'bg-red-100', text: 'text-red-800' },
+            'Gate Pass Created': { bg: 'bg-green-100', text: 'text-green-800' },
+            'Gate Pass Not Created': {
+              bg: 'bg-yellow-100',
+              text: 'text-yellow-800',
+            },
+            'Left Out': { bg: 'bg-red-100', text: 'text-red-800' },
           };
 
           const { bg = 'bg-gray-100', text = 'text-gray-800' } =
@@ -339,24 +382,16 @@ export function ArchivedPage() {
             <button
               type="button"
               onClick={() => {
-                if (row.original.paymentStatus !== 'unpaid') {
-                  setSelectedRow(row.original);
-                  setDrawerOpen(true);
-                }
+                setSelectedRow(row.original);
+                setDrawerOpen(true);
               }}
-              className={`px-2 py-1 rounded-full text-xs font-medium ${bg} ${text} hover:opacity-80 transition`}
+              className={`px-2 py-1 rounded-md text-xs font-medium ${bg} ${text} hover:opacity-80 transition`}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {status}
             </button>
           );
         },
         enableSorting: false,
-      },
-      {
-        accessorKey: 'soldPrice',
-        header: 'Sold Price',
-        cell: (info) => `$${(info.getValue() as number).toLocaleString()}`,
-        enableSorting: true,
       },
     ],
     [globalFilter],
@@ -488,8 +523,11 @@ export function ArchivedPage() {
           drawerOpen={drawerOpen}
           setDrawerOpen={setDrawerOpen}
           selectedRow={selectedRow}
+          setQrOpen={setQrOpen}
         />
       </div>
+
+      <GatePassDialog qropen={qropen} setQrOpen={setQrOpen} selectedRow={selectedRow}  />
     </>
   );
 }
