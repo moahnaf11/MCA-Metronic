@@ -67,6 +67,7 @@ export const MENU_SIDEBAR: MenuConfig = [
   },
   { title: 'Sold Vehicles', path: '/sold-vehicles' },
   { title: 'Archived', path: '/archived' },
+  { title: 'Form Page', path: '/form-page' },
   {
     title: 'Public Profile',
     icon: UserCircle,
