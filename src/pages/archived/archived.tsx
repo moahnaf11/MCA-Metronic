@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ColumnDef,
-  ColumnOrderState,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -13,15 +12,30 @@ import {
   VisibilityState,
 } from '@tanstack/react-table';
 import {
+  endOfMonth,
+  endOfYear,
+  format,
+  isEqual,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+  subDays,
+  subMonths,
+  subYears,
+} from 'date-fns';
+import {
   Calendar,
+  CalendarIcon,
   Car,
   CheckCircle,
   Palette,
   User,
   XCircle,
 } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 import { Helmet } from 'react-helmet';
 import highlightMatch from '@/lib/dataFilters';
+import { cn } from '@/lib/utils';
 import {
   GatePassStatus,
   gatePassStatusOptions,
@@ -29,6 +43,7 @@ import {
   vehicles,
 } from '@/lib/vehicles';
 import { Button } from '@/components/ui/button';
+import { Calendar as DateRangePicker } from '@/components/ui/calendar';
 import {
   Card,
   CardContent,
@@ -40,6 +55,11 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { DataGridTable } from '@/components/ui/data-grid-table';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -65,7 +85,6 @@ export function ArchivedPage() {
     pageSize: 25,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [selectedRow, setSelectedRow] = useState<Vehicle | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -80,6 +99,83 @@ export function ArchivedPage() {
     owner: false,
   });
   const [qropen, setQrOpen] = useState(false);
+  const [gatePassStatusFilter, setGatePassStatusFilter] = useState('all');
+
+  const today = new Date();
+
+  // Define preset ranges in an array
+  const presets = [
+    { label: 'Today', range: { from: today, to: today } },
+    {
+      label: 'Yesterday',
+      range: { from: subDays(today, 1), to: subDays(today, 1) },
+    },
+    { label: 'Last 7 days', range: { from: subDays(today, 6), to: today } },
+    { label: 'Last 30 days', range: { from: subDays(today, 29), to: today } },
+    {
+      label: 'Month to date',
+      range: { from: startOfMonth(today), to: today },
+    },
+    {
+      label: 'Last month',
+      range: {
+        from: startOfMonth(subMonths(today, 1)),
+        to: endOfMonth(subMonths(today, 1)),
+      },
+    },
+    { label: 'Year to date', range: { from: startOfYear(today), to: today } },
+    {
+      label: 'Last year',
+      range: {
+        from: startOfYear(subYears(today, 1)),
+        to: endOfYear(subYears(today, 1)),
+      },
+    },
+  ];
+
+  const [month, setMonth] = useState(today);
+  const defaultPreset = presets[6];
+  const [date, setDate] = useState<DateRange | undefined>(defaultPreset.range); // Default: Last 7 days
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(
+    defaultPreset.label,
+  );
+
+  const handleApply = () => {
+    if (date) {
+      setDate(date);
+    }
+    setIsPopoverOpen(false);
+  };
+  const handleReset = () => {
+    setDate(defaultPreset.range);
+    setSelectedPreset(defaultPreset.label);
+    setIsPopoverOpen(false);
+  };
+
+  const handleSelect = (selected: DateRange | undefined) => {
+    setDate({
+      from: selected?.from || undefined,
+      to: selected?.to || undefined,
+    });
+    setSelectedPreset(null); // Clear preset when manually selecting a range
+  };
+  // Update `selectedPreset` whenever `date` changes
+  useEffect(() => {
+    const matchedPreset = presets.find(
+      (preset) =>
+        isEqual(
+          startOfDay(preset.range.from),
+          startOfDay(date?.from || new Date(0)),
+        ) &&
+        isEqual(
+          startOfDay(preset.range.to),
+          startOfDay(date?.to || new Date(0)),
+        ),
+    );
+    setSelectedPreset(matchedPreset?.label || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
 
   const globalFilterFn = (row: Row<Vehicle>, columnId, filterValue: string) => {
     const searchableFields: (keyof Vehicle)[] = [
@@ -87,6 +183,9 @@ export function ArchivedPage() {
       'buyerId',
       'customerName',
       'paddle',
+      'run',
+      'auction',
+      'invoiceNumber',
     ];
 
     return searchableFields.some((field) => {
@@ -97,13 +196,20 @@ export function ArchivedPage() {
 
   const toggleCarDetails = () => {
     setColumnVisibility((old) => {
-      const isVisible = old?.year ?? true;
+      const allVisible =
+        old?.year !== false &&
+        old?.make !== false &&
+        old?.model !== false &&
+        old?.color !== false;
+
+      const newVisibility = !allVisible;
+
       return {
         ...old,
-        year: !isVisible,
-        make: !isVisible,
-        model: !isVisible,
-        color: !isVisible,
+        year: newVisibility,
+        make: newVisibility,
+        model: newVisibility,
+        color: newVisibility,
       };
     });
   };
@@ -113,16 +219,18 @@ export function ArchivedPage() {
     () => [
       {
         accessorKey: 'id',
-
+        id: 'id',
         header: ({ column }) => (
-          <DataGridColumnHeader title="ID" column={column} />
+          <DataGridColumnHeader title="ID" visibility={true} column={column} />
         ),
         cell: (info) => info.getValue(),
         enableSorting: true,
-        meta: { headerTitle: 'Vehicle ID' },
+        meta: { headerTitle: 'ID' },
+        enableHiding: false,
       },
       {
         accessorKey: 'run',
+        id: 'run',
         header: 'Run',
         cell: (info) => info.getValue(),
         enableSorting: true,
@@ -131,6 +239,7 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'vin',
+        id: 'vin',
         header: 'VIN',
         cell: ({ row }) => {
           const vehicle = row.original;
@@ -214,8 +323,13 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'year',
+        id: 'year',
         header: ({ column }) => (
-          <DataGridColumnHeader title="Year" column={column} />
+          <DataGridColumnHeader
+            title="Year"
+            visibility={true}
+            column={column}
+          />
         ),
         cell: (info) => info.getValue(),
         filterFn: 'includesString', // 👈 THIS is the key
@@ -223,18 +337,21 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'make',
+        id: 'make',
         header: 'Make',
         cell: (info) => info.getValue(),
         enableSorting: false,
       },
       {
         accessorKey: 'model',
+        id: 'model',
         header: 'Model',
         cell: (info) => info.getValue(),
         enableSorting: false,
       },
       {
         accessorKey: 'color',
+        id: 'color',
         header: 'Color',
         cell: (info) => (
           <span
@@ -267,12 +384,14 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'owner',
+        id: 'owner',
         header: 'Company/Owner',
         cell: (info) => info.getValue(),
         enableSorting: false,
       },
       {
         accessorKey: 'buyNow',
+        id: 'buyNow',
         header: 'Buy Now',
         cell: (info) => {
           const isBuyNow = info.getValue() as boolean;
@@ -286,15 +405,22 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'auction',
+        id: 'auction',
         header: 'Auction',
-        cell: (info) => info.getValue(),
+        cell: ({ row }) =>
+          highlightMatch(row.original.auction.toString(), globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: false,
       },
       {
         accessorKey: 'date',
+        id: 'date',
         header: ({ column }) => (
-          <DataGridColumnHeader title="Date" column={column} />
+          <DataGridColumnHeader
+            title="Date"
+            column={column}
+            visibility={true}
+          />
         ),
         cell: (info) => info.getValue(),
         filterFn: 'includesString', // 👈 THIS is the key
@@ -302,6 +428,7 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'paddle',
+        id: 'paddle',
         header: 'Paddle',
         cell: ({ row }) => highlightMatch(row.original.paddle, globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
@@ -309,12 +436,14 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'buyerId',
+        id: 'buyerId',
         header: 'Buyer ID ',
         cell: ({ row }) => highlightMatch(row.original.buyerId, globalFilter),
         enableSorting: false,
       },
       {
         accessorKey: 'customerName',
+        id: 'customerName',
         header: 'Buyer Name',
         cell: ({ row }) =>
           highlightMatch(row.original.customerName, globalFilter),
@@ -322,47 +451,23 @@ export function ArchivedPage() {
       },
       {
         accessorKey: 'invoiceNumber',
+        id: 'invoiceNumber',
         header: 'Invoice ID',
-        cell: (info) => info.getValue(),
+        cell: ({ row }) =>
+          highlightMatch(row.original.invoiceNumber, globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: false,
       },
       {
         accessorKey: 'soldPrice',
+        id: 'soldPrice',
         header: 'Sold Price',
         cell: (info) => `$${(info.getValue() as number).toLocaleString()}`,
-        enableSorting: true,
+        enableSorting: false,
       },
       {
         accessorKey: 'gatePassStatus',
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Gate Pass Status"
-            filter={
-              <Select
-                value={column.getFilterValue() as string}
-                defaultValue="all"
-                onValueChange={(value) =>
-                  column.setFilterValue(value === 'all' ? undefined : value)
-                }
-              >
-                <SelectTrigger className="">
-                  <SelectValue placeholder="Filter Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  {gatePassStatusOptions.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            }
-          />
-        ),
-        filterFn: 'equalsString',
+        id: 'gatePassStatus',
         cell: ({ row, getValue }) => {
           const status = getValue() as GatePassStatus;
 
@@ -396,20 +501,46 @@ export function ArchivedPage() {
     ],
     [globalFilter],
   );
+
+  const [columnOrder, setColumnOrder] = useState<string[]>(
+    columns.map((column) => column.id as string),
+  );
   const table = useReactTable({
     columns,
     data: useMemo(() => {
-      if (buyNowFilter === 'buyNow') return data.filter((v) => v.buyNow);
-      if (buyNowFilter === 'auction') return data.filter((v) => !v.buyNow);
-      return data;
-    }, [data, buyNowFilter]),
-    pageCount: Math.ceil((data?.length || 0) / pagination.pageSize),
+      let filtered = data;
+
+      if (buyNowFilter === 'buyNow') {
+        filtered = filtered.filter((v) => v.buyNow);
+      } else if (buyNowFilter === 'auction') {
+        filtered = filtered.filter((v) => !v.buyNow);
+      }
+
+      if (gatePassStatusFilter && gatePassStatusFilter !== 'all') {
+        filtered = filtered.filter(
+          (v) => v.gatePassStatus === gatePassStatusFilter,
+        );
+      }
+
+      if (date?.from && date?.to) {
+        filtered = filtered.filter((v) => {
+          const vehicleDate = new Date(v.date);
+          return (
+            vehicleDate >= new Date(date.from!) &&
+            vehicleDate <= new Date(date.to!)
+          );
+        });
+      }
+
+      return filtered;
+    }, [data, buyNowFilter, gatePassStatusFilter, date]),
     getRowId: (row: Vehicle) => row.id.toString(),
     state: {
       pagination,
       sorting,
       columnOrder,
       columnVisibility,
+      globalFilter,
     },
     onPaginationChange: setPagination,
     onColumnVisibilityChange: setColumnVisibility,
@@ -421,6 +552,10 @@ export function ArchivedPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  const allCarDetailsVisible = ['year', 'make', 'model', 'color'].every(
+    (colId) => table.getColumn(colId)?.getIsVisible(),
+  );
 
   // Simulate fetching data
   useEffect(() => {
@@ -467,17 +602,104 @@ export function ArchivedPage() {
             type="text"
             value={globalFilter ?? ''}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="vin, buyerID, buyerName, paddle..."
+            placeholder="vin, buyerID, buyerName, paddle, run, auction, invoiceID, "
             className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full max-w-sm"
           />
           <div className="flex gap-4 items-center">
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  mode="input"
+                  placeholder={!date?.from && !date?.to}
+                  className="w-[250px]"
+                >
+                  <CalendarIcon />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, 'LLL dd, y')} -{' '}
+                        {format(date.to, 'LLL dd, y')}
+                      </>
+                    ) : (
+                      format(date.from, 'LLL dd, y')
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <div className="flex max-sm:flex-col">
+                  <div className="relative border-border max-sm:order-1 max-sm:border-t sm:w-32">
+                    <div className="h-full border-border sm:border-e py-2">
+                      <div className="flex flex-col px-2 gap-[2px]">
+                        {presets.map((preset, index) => (
+                          <Button
+                            key={index}
+                            type="button"
+                            variant="ghost"
+                            className={cn(
+                              'h-8 w-full justify-start',
+                              selectedPreset === preset.label && 'bg-accent',
+                            )}
+                            onClick={() => {
+                              setDate(preset.range);
+                              // Update the calendar to show the starting month of the selected range
+                              setMonth(preset.range.from || today);
+                              setSelectedPreset(preset.label); // Explicitly set the active preset
+                            }}
+                          >
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <DateRangePicker
+                    autoFocus
+                    mode="range"
+                    month={month}
+                    onMonthChange={setMonth}
+                    showOutsideDays={false}
+                    selected={date}
+                    onSelect={handleSelect}
+                    numberOfMonths={2}
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-1.5 border-t border-border p-3">
+                  <Button variant="outline" onClick={handleReset}>
+                    Reset
+                  </Button>
+                  <Button onClick={handleApply}>Apply</Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Select
+              defaultValue="all"
+              onValueChange={(value) => setGatePassStatusFilter(value)}
+            >
+              <SelectTrigger className="min-w-max">
+                <SelectValue placeholder="Filter Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {gatePassStatusOptions.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select
               defaultValue="all"
               onValueChange={(value) =>
                 setBuyNowFilter(value as 'all' | 'buyNow' | 'auction')
               }
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="min-w-max">
                 <SelectValue placeholder="Buy Now filter" />
               </SelectTrigger>
               <SelectContent>
@@ -493,19 +715,19 @@ export function ArchivedPage() {
               className="text-lg"
               variant="secondary"
             >
-              {table.getColumn('year')?.getIsVisible()
-                ? 'Hide Car Details'
-                : 'Show Car Details'}
+              {allCarDetailsVisible ? 'Hide Car Details' : 'Show Car Details'}
             </Button>
           </div>
         </div>
 
         <DataGrid
           table={table}
-          recordCount={data?.length || 0}
+          recordCount={table.getFilteredRowModel().rows.length}
           tableLayout={{
             cellBorder: true,
             width: 'auto',
+            columnsVisibility: true,
+            columnsMovable: true,
           }}
         >
           <div className="w-full space-y-2.5">
@@ -527,7 +749,11 @@ export function ArchivedPage() {
         />
       </div>
 
-      <GatePassDialog qropen={qropen} setQrOpen={setQrOpen} selectedRow={selectedRow}  />
+      <GatePassDialog
+        qropen={qropen}
+        setQrOpen={setQrOpen}
+        selectedRow={selectedRow}
+      />
     </>
   );
 }

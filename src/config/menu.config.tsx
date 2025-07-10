@@ -65,8 +65,14 @@ export const MENU_SIDEBAR: MenuConfig = [
       { title: 'Dark Sidebar', path: '/dark-sidebar' },
     ],
   },
-  { title: 'Sold Vehicles', path: '/sold-vehicles' },
-  { title: 'Archived', path: '/archived' },
+  {
+    title: 'Auctions',
+    icon: LayoutGrid,
+    children: [
+      { title: 'Sold Vehicles', path: '/sold-vehicles' },
+      { title: 'Archived', path: '/archived' },
+    ],
+  },
   { title: 'Form Page', path: '/form-page' },
   {
     title: 'Public Profile',
