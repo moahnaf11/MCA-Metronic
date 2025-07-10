@@ -1,36 +1,45 @@
 // src/pages/example/example-page.tsx
 import { useEffect, useMemo, useState } from 'react';
-// import { zodResolver } from '@hookform/resolvers/zod';
-// import { RiCheckboxCircleFill } from '@remixicon/react';
 import {
   ColumnDef,
-  ColumnFiltersState,
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  PaginationState,
   Row,
   SortingState,
   useReactTable,
+  VisibilityState,
 } from '@tanstack/react-table';
 import {
+  endOfMonth,
+  endOfYear,
+  format,
+  isEqual,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+  subDays,
+  subMonths,
+  subYears,
+} from 'date-fns';
+import {
   Calendar,
+  CalendarIcon,
   Car,
   CheckCircle,
   Palette,
   User,
   XCircle,
 } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 import { Helmet } from 'react-helmet-async';
-// import { useForm } from 'react-hook-form';
-// import { toast } from 'sonner';
-// import { z } from 'zod';
 import highlightMatch from '@/lib/dataFilters';
 import { cn } from '@/lib/utils';
 import { PaymentStatus, Vehicle, vehicles } from '@/lib/vehicles';
-// import { Alert, AlertIcon, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Calendar as DateRangePicker } from '@/components/ui/calendar';
 import {
   Card,
   CardContent,
@@ -40,6 +49,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
+import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
+import { DataGridPagination } from '@/components/ui/data-grid-pagination';
+import { DataGridTable } from '@/components/ui/data-grid-table';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -59,16 +77,25 @@ import HistoryDrawer from './HistoryDrawer';
 export function ExamplePage() {
   const [data, setData] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
   const [globalFilter, setGlobalFilter] = useState(''); // For global search
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [showCarDetails, setShowCarDetails] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<
     'all' | 'paid' | 'partial' | 'unpaid'
   >('all');
   const [buyNowFilter, setBuyNowFilter] = useState<
     'all' | 'buyNow' | 'auction'
   >('all');
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    year: false,
+    make: false,
+    model: false,
+    color: false,
+    owner: false,
+  });
   const [open, setOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [linked, setLinked] = useState(false);
@@ -78,12 +105,91 @@ export function ExamplePage() {
   const partial = vehicles.filter((v) => v.paymentStatus === 'partial').length;
   const unpaid = vehicles.filter((v) => v.paymentStatus === 'unpaid').length;
 
+  const today = new Date();
+
+  // Define preset ranges in an array
+  const presets = [
+    { label: 'Today', range: { from: today, to: today } },
+    {
+      label: 'Yesterday',
+      range: { from: subDays(today, 1), to: subDays(today, 1) },
+    },
+    { label: 'Last 7 days', range: { from: subDays(today, 6), to: today } },
+    { label: 'Last 30 days', range: { from: subDays(today, 29), to: today } },
+    {
+      label: 'Month to date',
+      range: { from: startOfMonth(today), to: today },
+    },
+    {
+      label: 'Last month',
+      range: {
+        from: startOfMonth(subMonths(today, 1)),
+        to: endOfMonth(subMonths(today, 1)),
+      },
+    },
+    { label: 'Year to date', range: { from: startOfYear(today), to: today } },
+    {
+      label: 'Last year',
+      range: {
+        from: startOfYear(subYears(today, 1)),
+        to: endOfYear(subYears(today, 1)),
+      },
+    },
+  ];
+
+  const [month, setMonth] = useState(today);
+  const defaultPreset = presets[6];
+  const [date, setDate] = useState<DateRange | undefined>(defaultPreset.range); // Default: Last 7 days
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(
+    defaultPreset.label,
+  );
+
+  const handleApply = () => {
+    if (date) {
+      setDate(date);
+    }
+    setIsPopoverOpen(false);
+  };
+  const handleReset = () => {
+    setDate(defaultPreset.range);
+    setSelectedPreset(defaultPreset.label);
+    setIsPopoverOpen(false);
+  };
+
+  const handleSelect = (selected: DateRange | undefined) => {
+    setDate({
+      from: selected?.from || undefined,
+      to: selected?.to || undefined,
+    });
+    setSelectedPreset(null); // Clear preset when manually selecting a range
+  };
+  // Update `selectedPreset` whenever `date` changes
+  useEffect(() => {
+    const matchedPreset = presets.find(
+      (preset) =>
+        isEqual(
+          startOfDay(preset.range.from),
+          startOfDay(date?.from || new Date(0)),
+        ) &&
+        isEqual(
+          startOfDay(preset.range.to),
+          startOfDay(date?.to || new Date(0)),
+        ),
+    );
+    setSelectedPreset(matchedPreset?.label || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
+
   const globalFilterFn = (row: Row<Vehicle>, columnId, filterValue: string) => {
     const searchableFields: (keyof Vehicle)[] = [
       'vin',
       'buyerId',
       'customerName',
       'paddle',
+      'run',
+      'auction',
+      'invoiceNumber',
     ];
 
     return searchableFields.some((field) => {
@@ -92,40 +198,53 @@ export function ExamplePage() {
     });
   };
 
-  const filteredData = useMemo(() => {
-    return data.filter((v) => {
-      const paymentMatches =
-        selectedStatus === 'all' || v.paymentStatus === selectedStatus;
+  const toggleCarDetails = () => {
+    setColumnVisibility((old) => {
+      const allVisible =
+        old?.year !== false &&
+        old?.make !== false &&
+        old?.model !== false &&
+        old?.color !== false;
 
-      const buyNowMatches =
-        buyNowFilter === 'all' ||
-        (buyNowFilter === 'buyNow' && v.buyNow === true) ||
-        (buyNowFilter === 'auction' && v.buyNow === false);
+      const newVisibility = !allVisible;
 
-      return paymentMatches && buyNowMatches;
+      return {
+        ...old,
+        year: newVisibility,
+        make: newVisibility,
+        model: newVisibility,
+        color: newVisibility,
+      };
     });
-  }, [data, selectedStatus, buyNowFilter]);
+  };
 
   // Define columns for @tanstack/react-table
   const columns = useMemo<ColumnDef<Vehicle>[]>(
     () => [
       {
         accessorKey: 'id',
-        header: 'ID',
+        id: 'id',
+        header: ({ column }) => (
+          <DataGridColumnHeader title="ID" visibility={true} column={column} />
+        ),
         cell: (info) => info.getValue(),
         enableSorting: true,
-        meta: { headerTitle: 'Vehicle ID' },
+        enableHiding: false,
+        meta: { headerTitle: 'ID' },
       },
       {
         accessorKey: 'run',
+        id: 'run',
         header: 'Run',
-        cell: (info) => info.getValue(),
+        cell: ({ row }) =>
+          highlightMatch(row.original.run.toString(), globalFilter),
         enableSorting: true,
         filterFn: 'includesString', // 👈 THIS is the key
         meta: { headerTitle: 'Run' },
       },
       {
         accessorKey: 'vin',
+        id: 'vin',
         header: 'VIN',
         cell: ({ row }) => {
           const vehicle = row.original;
@@ -209,25 +328,35 @@ export function ExamplePage() {
       },
       {
         accessorKey: 'year',
-        header: 'Year',
+        id: 'year',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="Year"
+            visibility={true}
+            column={column}
+          />
+        ),
         cell: (info) => info.getValue(),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: true,
       },
       {
         accessorKey: 'make',
+        id: 'make',
         header: 'Make',
         cell: (info) => info.getValue(),
         enableSorting: false,
       },
       {
         accessorKey: 'model',
+        id: 'model',
         header: 'Model',
         cell: (info) => info.getValue(),
         enableSorting: false,
       },
       {
         accessorKey: 'color',
+        id: 'color',
         header: 'Color',
         cell: (info) => (
           <span
@@ -260,12 +389,14 @@ export function ExamplePage() {
       },
       {
         accessorKey: 'owner',
+        id: 'owner',
         header: 'Company/Owner',
         cell: (info) => info.getValue(),
         enableSorting: false,
       },
       {
         accessorKey: 'buyNow',
+        id: 'buyNow',
         header: 'Buy Now',
         cell: (info) => {
           const isBuyNow = info.getValue() as boolean;
@@ -279,20 +410,30 @@ export function ExamplePage() {
       },
       {
         accessorKey: 'auction',
+        id: 'auction',
         header: 'Auction',
-        cell: (info) => info.getValue(),
+        cell: ({ row }) =>
+          highlightMatch(row.original.auction.toString(), globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: false,
       },
       {
         accessorKey: 'date',
-        header: 'Date',
+        id: 'date',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="Date"
+            column={column}
+            visibility={true}
+          />
+        ),
         cell: (info) => info.getValue(),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: true,
       },
       {
         accessorKey: 'paddle',
+        id: 'paddle',
         header: 'Paddle',
         cell: ({ row }) => highlightMatch(row.original.paddle, globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
@@ -300,12 +441,14 @@ export function ExamplePage() {
       },
       {
         accessorKey: 'buyerId',
+        id: 'buyerId',
         header: 'Buyer ID ',
         cell: ({ row }) => highlightMatch(row.original.buyerId, globalFilter),
         enableSorting: false,
       },
       {
         accessorKey: 'customerName',
+        id: 'customerName',
         header: 'Buyer Name',
         cell: ({ row }) =>
           highlightMatch(row.original.customerName, globalFilter),
@@ -313,13 +456,16 @@ export function ExamplePage() {
       },
       {
         accessorKey: 'invoiceNumber',
+        id: 'invoiceNumber',
         header: 'Invoice ID',
-        cell: (info) => info.getValue(),
+        cell: ({ row }) =>
+          highlightMatch(row.original.invoiceNumber, globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: false,
       },
       {
         accessorKey: 'paymentStatus',
+        id: 'paymentStatus',
         header: 'Payment Status',
         cell: ({ row, getValue }) => {
           const status = getValue() as PaymentStatus;
@@ -352,12 +498,14 @@ export function ExamplePage() {
       },
       {
         accessorKey: 'soldPrice',
+        id: 'soldPrice',
         header: 'Sold Price',
         cell: (info) => `$${(info.getValue() as number).toLocaleString()}`,
         enableSorting: true,
       },
       {
         accessorKey: 'actions',
+        id: 'actions',
         header: 'Actions',
         enableSorting: false,
         cell: ({ row }) => {
@@ -391,25 +539,60 @@ export function ExamplePage() {
     [globalFilter],
   );
 
+  const [columnOrder, setColumnOrder] = useState<string[]>(
+    columns.map((column) => column.id as string),
+  );
+
   // Initialize the table using useReactTable
   const table = useReactTable<Vehicle>({
-    data: filteredData,
+    data: useMemo(() => {
+      let filtered = data;
+
+      if (buyNowFilter === 'buyNow') {
+        filtered = filtered.filter((v) => v.buyNow);
+      } else if (buyNowFilter === 'auction') {
+        filtered = filtered.filter((v) => !v.buyNow);
+      }
+
+      if (date?.from && date?.to) {
+        filtered = filtered.filter((v) => {
+          const vehicleDate = new Date(v.date);
+          return (
+            vehicleDate >= new Date(date.from!) &&
+            vehicleDate <= new Date(date.to!)
+          );
+        });
+      }
+
+      if (selectedStatus && selectedStatus !== 'all') {
+        filtered = filtered.filter((v) => v.paymentStatus === selectedStatus);
+      }
+
+      return filtered;
+    }, [data, buyNowFilter, date, selectedStatus]),
     columns,
+    getRowId: (row: Vehicle) => row.id.toString(),
     state: {
-      globalFilter,
+      pagination,
       sorting,
-      columnFilters,
+      columnOrder,
+      columnVisibility,
+      globalFilter,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
+    onColumnVisibilityChange: setColumnVisibility,
     globalFilterFn,
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), // Required for global filter
-    getSortedRowModel: getSortedRowModel(), // Required for sorting
-    getPaginationRowModel: getPaginationRowModel(), // Required for pagination
-    debugTable: true, // Set to true for debugging table state
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
+
+  const allCarDetailsVisible = ['year', 'make', 'model', 'color'].every(
+    (colId) => table.getColumn(colId)?.getIsVisible(),
+  );
 
   // Simulate fetching data
   useEffect(() => {
@@ -426,13 +609,6 @@ export function ExamplePage() {
     };
     fetchData();
   }, []);
-
-  useEffect(() => {
-    const columnIdsToToggle = ['year', 'make', 'model', 'color'];
-    columnIdsToToggle.forEach((id) => {
-      table.getColumn(id)?.toggleVisibility(showCarDetails);
-    });
-  }, [showCarDetails, table]);
 
   if (loading) {
     return (
@@ -542,6 +718,76 @@ export function ExamplePage() {
             className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full max-w-sm"
           />
           <div className="flex gap-4 items-center">
+            <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  mode="input"
+                  placeholder={!date?.from && !date?.to}
+                  className="w-[250px]"
+                >
+                  <CalendarIcon />
+                  {date?.from ? (
+                    date.to ? (
+                      <>
+                        {format(date.from, 'LLL dd, y')} -{' '}
+                        {format(date.to, 'LLL dd, y')}
+                      </>
+                    ) : (
+                      format(date.from, 'LLL dd, y')
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <div className="flex max-sm:flex-col">
+                  <div className="relative border-border max-sm:order-1 max-sm:border-t sm:w-32">
+                    <div className="h-full border-border sm:border-e py-2">
+                      <div className="flex flex-col px-2 gap-[2px]">
+                        {presets.map((preset, index) => (
+                          <Button
+                            key={index}
+                            type="button"
+                            variant="ghost"
+                            className={cn(
+                              'h-8 w-full justify-start',
+                              selectedPreset === preset.label && 'bg-accent',
+                            )}
+                            onClick={() => {
+                              setDate(preset.range);
+                              // Update the calendar to show the starting month of the selected range
+                              setMonth(preset.range.from || today);
+                              setSelectedPreset(preset.label); // Explicitly set the active preset
+                            }}
+                          >
+                            {preset.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <DateRangePicker
+                    autoFocus
+                    mode="range"
+                    month={month}
+                    onMonthChange={setMonth}
+                    showOutsideDays={false}
+                    selected={date}
+                    onSelect={handleSelect}
+                    numberOfMonths={2}
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-1.5 border-t border-border p-3">
+                  <Button variant="outline" onClick={handleReset}>
+                    Reset
+                  </Button>
+                  <Button onClick={handleApply}>Apply</Button>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Select
               defaultValue="all"
               onValueChange={(value) =>
@@ -559,339 +805,34 @@ export function ExamplePage() {
             </Select>
             <Button
               onClick={() => {
-                setShowCarDetails((prev) => !prev);
+                toggleCarDetails();
               }}
               className="text-lg"
               variant="secondary"
             >
-              {showCarDetails ? 'Hide Car Details' : 'Show Car Details'}
+              {allCarDetailsVisible ? 'Hide Car Details' : 'Show Car Details'}
             </Button>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm">Rows per page:</span>
-              <Select
-                value={String(table.getState().pagination.pageSize)}
-                onValueChange={(value) => table.setPageSize(Number(value))}
-              >
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="Rows per page" />
-                </SelectTrigger>
-                <SelectContent>
-                  {[10, 20, 30, 40, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={String(pageSize)}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
 
-        <DataGrid table={table} recordCount={data.length} isLoading={loading}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        colSpan={header.colSpan}
-                        className={cn(
-                          'px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none',
-                        )}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div className="flex items-center">
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                            {{
-                              asc: ' 🔼',
-                              desc: ' 🔽',
-                            }[header.column.getIsSorted() as string] ?? null}
-                          </div>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="">
-                <tr>
-                  <td></td>
-                  {/* for 'id' column or any column you want to keep blank */}
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table.getColumn('run')?.getFilterValue() as string) ??
-                        ''
-                      }
-                      onChange={(e) =>
-                        table.getColumn('run')?.setFilterValue(e.target.value)
-                      }
-                      className="input-class"
-                      placeholder="Run"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table.getColumn('vin')?.getFilterValue() as string) ??
-                        ''
-                      }
-                      onChange={(e) =>
-                        table.getColumn('vin')?.setFilterValue(e.target.value)
-                      }
-                      placeholder="VIN"
-                    />
-                  </td>
-                  {showCarDetails && (
-                    <td className="px-6 py-3">
-                      <input
-                        type="number"
-                        value={
-                          (table
-                            .getColumn('year')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('year')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Year"
-                      />
-                    </td>
-                  )}
-                  {showCarDetails && (
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('make')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('make')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Make"
-                      />
-                    </td>
-                  )}
-                  {showCarDetails && (
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('model')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('model')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Model"
-                      />
-                    </td>
-                  )}
-
-                  {showCarDetails && (
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('color')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('color')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Color"
-                      />
-                    </td>
-                  )}
-                  {showCarDetails && (
-                    <td className="px-6 py-3">
-                      <input
-                        type="text"
-                        value={
-                          (table
-                            .getColumn('owner')
-                            ?.getFilterValue() as string) ?? ''
-                        }
-                        onChange={(e) =>
-                          table
-                            .getColumn('owner')
-                            ?.setFilterValue(e.target.value)
-                        }
-                        placeholder="Company/Owner"
-                      />
-                    </td>
-                  )}
-                  <td></td>
-                  {!showCarDetails && <td></td>}
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table
-                          .getColumn('auction')
-                          ?.getFilterValue() as string) ?? ''
-                      }
-                      onChange={(e) =>
-                        table
-                          .getColumn('auction')
-                          ?.setFilterValue(e.target.value)
-                      }
-                      placeholder="Auction"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="date"
-                      value={
-                        (table.getColumn('date')?.getFilterValue() as string) ??
-                        ''
-                      }
-                      onChange={(e) =>
-                        table.getColumn('date')?.setFilterValue(e.target.value)
-                      }
-                      placeholder="Date"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table
-                          .getColumn('paddle')
-                          ?.getFilterValue() as string) ?? ''
-                      }
-                      onChange={(e) =>
-                        table
-                          .getColumn('paddle')
-                          ?.setFilterValue(e.target.value)
-                      }
-                      placeholder="Paddle"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table
-                          .getColumn('buyerId')
-                          ?.getFilterValue() as string) ?? ''
-                      }
-                      onChange={(e) =>
-                        table
-                          .getColumn('buyerId')
-                          ?.setFilterValue(e.target.value)
-                      }
-                      placeholder="Buyer ID"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table
-                          .getColumn('customerName')
-                          ?.getFilterValue() as string) ?? ''
-                      }
-                      onChange={(e) =>
-                        table
-                          .getColumn('customerName')
-                          ?.setFilterValue(e.target.value)
-                      }
-                      placeholder="Buyer Name"
-                    />
-                  </td>
-                  <td className="px-6 py-3">
-                    <input
-                      type="text"
-                      value={
-                        (table
-                          .getColumn('invoiceNumber')
-                          ?.getFilterValue() as string) ?? ''
-                      }
-                      onChange={(e) =>
-                        table
-                          .getColumn('invoiceNumber')
-                          ?.setFilterValue(e.target.value)
-                      }
-                      placeholder="Invoice ID"
-                    />
-                  </td>
-                  <td>{/* actions or blank */}</td>
-                </tr>
-
-                {table.getRowModel().rows.length === 0 && !loading ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      className="px-6 py-4 text-center"
-                    >
-                      No matching records found.
-                    </td>
-                  </tr>
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className="">
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          className="px-6 py-4 whitespace-nowrap text-sm"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Controls */}
-          <div className="flex items-center justify-between p-4 border-t border-gray-200 rounded-b-lg">
-            <button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              Previous
-            </button>
-            <span className="text-sm">
-              Page{' '}
-              <strong>
-                {table.getState().pagination.pageIndex + 1} of{' '}
-                {table.getPageCount()}
-              </strong>
-            </span>
-            <button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="px-4 py-2 text-sm font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              Next
-            </button>
+        <DataGrid
+          table={table}
+          recordCount={table.getFilteredRowModel().rows.length}
+          tableLayout={{
+            cellBorder: true,
+            width: 'auto',
+            columnsVisibility: true,
+            columnsMovable: true,
+          }}
+        >
+          <div className="w-full space-y-2.5">
+            <DataGridContainer>
+              <ScrollArea>
+                <DataGridTable />
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </DataGridContainer>
+            <DataGridPagination />
           </div>
         </DataGrid>
 
