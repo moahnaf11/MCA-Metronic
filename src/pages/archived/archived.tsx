@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DragEndEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import {
   ColumnDef,
   getCoreRowModel,
@@ -28,6 +30,7 @@ import {
   CalendarIcon,
   Car,
   CheckCircle,
+  Copy,
   Palette,
   User,
   XCircle,
@@ -55,6 +58,7 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { DataGridTable } from '@/components/ui/data-grid-table';
+import { DataGridTableDnd } from '@/components/ui/data-grid-table-dnd';
 import {
   Popover,
   PopoverContent,
@@ -75,7 +79,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import HistoryDrawer from '../example/HistoryDrawer';
+import EditableCell from './EditableCell';
+import EditableSelect from './EditableSelect';
 import GatePassDialog from './GatePassDialog';
+import { Portal } from './Portal';
 
 export function ArchivedPage() {
   const [data, setData] = useState<Vehicle[]>([]);
@@ -214,6 +221,17 @@ export function ArchivedPage() {
     });
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      setColumnOrder((columnOrder) => {
+        const oldIndex = columnOrder.indexOf(active.id as string);
+        const newIndex = columnOrder.indexOf(over.id as string);
+        return arrayMove(columnOrder, oldIndex, newIndex);
+      });
+    }
+  };
+
   // Define columns for @tanstack/react-table
   const columns = useMemo<ColumnDef<Vehicle>[]>(
     () => [
@@ -243,78 +261,94 @@ export function ArchivedPage() {
         header: 'VIN',
         cell: ({ row }) => {
           const vehicle = row.original;
+          const copyToClipboard = (e: React.MouseEvent) => {
+            e.stopPropagation(); // Prevent tooltip or row click behavior
+            navigator.clipboard.writeText(vehicle.vin);
+          };
           return (
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-pointer">
-                    {highlightMatch(vehicle.vin, globalFilter)}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  sideOffset={20}
-                  className="shadow-lg rounded-md p-0"
-                >
-                  <Card className="min-w-[500px] rounded-md">
-                    <CardHeader>
-                      <CardHeading>
-                        <CardTitle className="text-lg">Car Details</CardTitle>
-                      </CardHeading>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-3">
-                          <Calendar className="w-4 h-4 text-blue-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Year
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.year}
-                            </p>
-                          </div>
-                        </div>
+                <div className="flex gap-3">
+                  <TooltipTrigger asChild>
+                    <span className="cursor-pointer">
+                      {highlightMatch(vehicle.vin, globalFilter)}
+                    </span>
+                  </TooltipTrigger>
+                  <button
+                    onClick={copyToClipboard}
+                    className="hover:text-blue-600"
+                    title="Copy VIN"
+                  >
+                    <Copy className="size-4" />
+                  </button>
+                </div>
 
-                        <div className="flex items-center space-x-3">
-                          <Car className="w-4 h-4 text-green-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Make & Model
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.make} {row.original.model}
-                            </p>
+                <Portal>
+                  <TooltipContent
+                    side="right"
+                    sideOffset={40}
+                    className="shadow-lg rounded-md p-0"
+                  >
+                    <Card className="min-w-[500px] rounded-md">
+                      <CardHeader>
+                        <CardHeading>
+                          <CardTitle className="text-lg">Car Details</CardTitle>
+                        </CardHeading>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Year
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.year}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center space-x-3">
-                          <Palette className="w-4 h-4 text-purple-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Color
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.color}
-                            </p>
+                          <div className="flex items-center space-x-3">
+                            <Car className="w-4 h-4 text-green-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Make & Model
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.make} {row.original.model}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center space-x-3">
-                          <User className="w-4 h-4 text-orange-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Owner/Seller
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.owner}
-                            </p>
+                          <div className="flex items-center space-x-3">
+                            <Palette className="w-4 h-4 text-purple-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Color
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.color}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-3">
+                            <User className="w-4 h-4 text-orange-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Owner/Seller
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.owner}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TooltipContent>
+                      </CardContent>
+                    </Card>
+                  </TooltipContent>
+                </Portal>
               </Tooltip>
             </TooltipProvider>
           );
@@ -339,7 +373,7 @@ export function ArchivedPage() {
         accessorKey: 'make',
         id: 'make',
         header: 'Make',
-        cell: (info) => info.getValue(),
+        cell: EditableCell,
         enableSorting: false,
       },
       {
@@ -353,33 +387,7 @@ export function ArchivedPage() {
         accessorKey: 'color',
         id: 'color',
         header: 'Color',
-        cell: (info) => (
-          <span
-            className="px-2 py-1 rounded-full text-xs font-medium"
-            style={{
-              backgroundColor:
-                {
-                  WHITE: '#F3F4F6',
-                  BLACK: '#1F2937',
-                  SILVER: '#D1D5DB',
-                  BLUE: '#DBEAFE',
-                  RED: '#FEE2E2',
-                  GRAY: '#E5E7EB',
-                }[info.getValue() as string] || '#E0E7FF',
-              color:
-                {
-                  WHITE: '#374151',
-                  BLACK: '#F9FAFB',
-                  SILVER: '#4B5563',
-                  BLUE: '#1D4ED8',
-                  RED: '#B91C1C',
-                  GRAY: '#374151',
-                }[info.getValue() as string] || '#4338CA',
-            }}
-          >
-            {info.getValue() as string}
-          </span>
-        ),
+        cell: EditableSelect,
         enableSorting: false,
       },
       {
@@ -728,12 +736,14 @@ export function ArchivedPage() {
             width: 'auto',
             columnsVisibility: true,
             columnsMovable: true,
+            columnsDraggable: true,
+            columnsPinnable: true,
           }}
         >
           <div className="w-full space-y-2.5">
             <DataGridContainer>
               <ScrollArea>
-                <DataGridTable />
+                <DataGridTableDnd handleDragEnd={handleDragEnd} />
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
             </DataGridContainer>
