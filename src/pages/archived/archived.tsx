@@ -30,7 +30,6 @@ import {
   CalendarIcon,
   Car,
   CheckCircle,
-  Copy,
   Palette,
   User,
   XCircle,

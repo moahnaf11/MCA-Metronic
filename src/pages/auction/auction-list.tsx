@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ColumnDef,
-  ColumnOrderState,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -14,6 +13,7 @@ import {
 import {
   addDays,
   addMonths,
+  differenceInSeconds,
   endOfMonth,
   // endOfYear,
   format,
@@ -25,7 +25,7 @@ import {
   // subMonths,
   // subYears,
 } from 'date-fns';
-import { CalendarIcon, FileText } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import {
   Auction,
@@ -58,6 +58,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CountdownCell } from './Countdown';
+import TableUpload from './FileUploadDialog';
 import LocationDialog from './LocationDialog';
 
 const AuctionList = () => {
@@ -75,8 +76,6 @@ const AuctionList = () => {
     pageSize: 25,
   });
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
-
   const today = new Date();
 
   // Define preset ranges in an array
@@ -207,25 +206,49 @@ const AuctionList = () => {
         enableHiding: false,
       },
       {
-        header: 'Auction Date',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="Auction Date"
+            visibility={true}
+            column={column}
+          />
+        ),
         id: 'auctionDate',
         accessorKey: 'auctionDate',
         enableSorting: true,
       },
       {
-        header: 'Start Time',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="Start Time"
+            visibility={true}
+            column={column}
+          />
+        ),
         id: 'startTime',
         accessorKey: 'startTime',
         enableSorting: true,
       },
       {
-        header: 'End Date',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="End Date"
+            visibility={true}
+            column={column}
+          />
+        ),
         id: 'endDate',
         accessorKey: 'endDate',
         enableSorting: true,
       },
       {
-        header: 'End Time',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="End Time"
+            visibility={true}
+            column={column}
+          />
+        ),
         id: 'endTime',
         accessorKey: 'endTime',
         enableSorting: true,
@@ -256,20 +279,34 @@ const AuctionList = () => {
         accessorKey: 'location',
       },
       {
-        header: 'Online List Time',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="Online List Time"
+            visibility={true}
+            column={column}
+          />
+        ),
         id: 'onlineListTime',
         accessorKey: 'onlineListTime',
         enableSorting: true,
       },
       {
-        header: 'Starts In',
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            title="Starts In"
+            visibility={true}
+            column={column}
+          />
+        ),
         id: 'startsIn',
         accessorKey: 'startsIn',
+        accessorFn: (row) => {
+          const now = new Date();
+          const auctionStart = new Date(`${row.auctionDate} ${row.startTime}`);
+          const diffInSec = differenceInSeconds(auctionStart, now);
+          return diffInSec <= 0 ? -1 : diffInSec;
+        },
         enableSorting: true,
-        // cell: ({ row }) => {
-        //   const id = row.original.id;
-        //   return <span>{countdowns[id] || 'Calculating...'}</span>;
-        // },
         cell: ({ row }) => {
           const auctionStart = new Date(
             `${row.original.auctionDate} ${row.original.startTime}`,
@@ -314,14 +351,16 @@ const AuctionList = () => {
         cell: () => (
           <div className="flex items-center gap-2">
             <LocationDialog />
-            <Button size="icon" variant="secondary" className="size-8">
-              <FileText className="size-4" />
-            </Button>
+            <TableUpload maxSize={10} maxFiles={2} />
           </div>
         ),
       },
     ],
     [globalFilter],
+  );
+
+  const [columnOrder, setColumnOrder] = useState<string[]>(
+    columns.map((column) => column.id as string),
   );
 
   const table = useReactTable({
