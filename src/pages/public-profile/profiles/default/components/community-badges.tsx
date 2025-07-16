@@ -6,6 +6,14 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+// import Swiper core and required modules
+import { A11y, Navigation, Pagination, Scrollbar } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/scrollbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ICommunityBadgesItem {
@@ -18,9 +26,10 @@ type ICommunityBadgesItems = Array<ICommunityBadgesItem>;
 
 interface ICommunityBadgesProps {
   title: string;
+  images: string[]; // <-- new
 }
 
-const CommunityBadges = ({ title }: ICommunityBadgesProps) => {
+const CommunityBadges = ({ title, images }: ICommunityBadgesProps) => {
   const items: ICommunityBadgesItems = [
     {
       stroke: 'stroke-blue-200 dark:stroke-blue-950',
@@ -61,16 +70,31 @@ const CommunityBadges = ({ title }: ICommunityBadgesProps) => {
   };
 
   return (
-    <Card>
+    <Card className="p-0">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="pb-7.5">
-        <div className="flex items-center flex-wrap gap-3 lg:gap-4">
-          {items.map((item, index) => {
-            return renderItem(item, index);
-          })}
-        </div>
+        <Swiper
+          modules={[Navigation, Pagination, Scrollbar, A11y]}
+          spaceBetween={10}
+          slidesPerView={1}
+          navigation
+          pagination={{ clickable: true }}
+          scrollbar={{ draggable: true }}
+          onSwiper={(swiper) => console.log(swiper)}
+          onSlideChange={() => console.log('slide change')}
+        >
+          {images.map((src, index) => (
+            <SwiperSlide key={index}>
+              <img
+                src={src}
+                alt={`Car ${index + 1}`}
+                className="w-full h-60 object-cover rounded-md"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </CardContent>
     </Card>
   );

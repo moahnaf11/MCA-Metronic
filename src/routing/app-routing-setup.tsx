@@ -38,13 +38,15 @@ import {
   AccountTeamsStarterPage,
   AccountUserProfilePage,
 } from '@/pages/account';
+import { ArchivedPage } from '@/pages/archived/archived';
+import AuctionList from '@/pages/auction/auction-list';
 import {
   AuthAccountDeactivatedPage,
   AuthWelcomeMessagePage,
 } from '@/pages/auth';
+import Car from '@/pages/carprofile/car';
 import { DefaultPage, Demo1DarkSidebarPage } from '@/pages/dashboards';
 import { ExamplePage } from '@/pages/example';
-import { ArchivedPage } from '@/pages/archived/archived';
 import FormPage from '@/pages/form/FormPage';
 import {
   NetworkAppRosterPage,
@@ -107,6 +109,8 @@ export function AppRoutingSetup() {
           <Route path="/sold-vehicles" element={<ExamplePage />} />
           <Route path="/archived" element={<ArchivedPage />} />
           <Route path="/form-page" element={<FormPage />} />
+          <Route path="/cars/:id" element={<Car />} />
+          <Route path="/auctions-list" element={<AuctionList />} />
           {/* Add your route */}
           <Route
             path="/public-profile/profiles/default/"

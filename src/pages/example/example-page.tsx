@@ -1,5 +1,7 @@
 // src/pages/example/example-page.tsx
 import { useEffect, useMemo, useState } from 'react';
+import { DragEndEvent } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import {
   ColumnDef,
   getCoreRowModel,
@@ -38,6 +40,7 @@ import { Helmet } from 'react-helmet-async';
 import highlightMatch from '@/lib/dataFilters';
 import { cn } from '@/lib/utils';
 import { PaymentStatus, Vehicle, vehicles } from '@/lib/vehicles';
+import { VinCopyButton } from '@/lib/vinCopyButton';
 import { Button } from '@/components/ui/button';
 import { Calendar as DateRangePicker } from '@/components/ui/calendar';
 import {
@@ -51,7 +54,9 @@ import {
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
-import { DataGridTable } from '@/components/ui/data-grid-table';
+// import { DataGridTable } from '@/components/ui/data-grid-table';
+import { DataGridTableDnd } from '@/components/ui/data-grid-table-dnd';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -71,6 +76,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Portal } from '../archived/Portal';
 import DialogDemo from './DialogDemo';
 import HistoryDrawer from './HistoryDrawer';
 
@@ -218,6 +224,17 @@ export function ExamplePage() {
     });
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      setColumnOrder((columnOrder) => {
+        const oldIndex = columnOrder.indexOf(active.id as string);
+        const newIndex = columnOrder.indexOf(over.id as string);
+        return arrayMove(columnOrder, oldIndex, newIndex);
+      });
+    }
+  };
+
   // Define columns for @tanstack/react-table
   const columns = useMemo<ColumnDef<Vehicle>[]>(
     () => [
@@ -251,75 +268,81 @@ export function ExamplePage() {
           return (
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-pointer">
-                    {highlightMatch(vehicle.vin, globalFilter)}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  sideOffset={20}
-                  className="shadow-lg rounded-md p-0"
-                >
-                  <Card className="min-w-[500px] rounded-md">
-                    <CardHeader>
-                      <CardHeading>
-                        <CardTitle className="text-lg">Car Details</CardTitle>
-                      </CardHeading>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-3">
-                          <Calendar className="w-4 h-4 text-blue-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Year
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.year}
-                            </p>
-                          </div>
-                        </div>
+                <div className="flex gap-3">
+                  <TooltipTrigger asChild>
+                    <span className="cursor-pointer">
+                      {highlightMatch(vehicle.vin, globalFilter)}
+                    </span>
+                  </TooltipTrigger>
+                  <VinCopyButton vin={vehicle.vin} />
+                </div>
 
-                        <div className="flex items-center space-x-3">
-                          <Car className="w-4 h-4 text-green-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Make & Model
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.make} {row.original.model}
-                            </p>
+                <Portal>
+                  <TooltipContent
+                    side="right"
+                    sideOffset={40}
+                    className="shadow-lg rounded-md p-0"
+                  >
+                    <Card className="min-w-[500px] rounded-md">
+                      <CardHeader>
+                        <CardHeading>
+                          <CardTitle className="text-lg">Car Details</CardTitle>
+                        </CardHeading>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Year
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.year}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center space-x-3">
-                          <Palette className="w-4 h-4 text-purple-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Color
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.color}
-                            </p>
+                          <div className="flex items-center space-x-3">
+                            <Car className="w-4 h-4 text-green-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Make & Model
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.make} {row.original.model}
+                              </p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center space-x-3">
-                          <User className="w-4 h-4 text-orange-500" />
-                          <div>
-                            <span className="text-lg uppercase tracking-wide">
-                              Owner/Seller
-                            </span>
-                            <p className="text-lg font-semibold">
-                              {row.original.owner}
-                            </p>
+                          <div className="flex items-center space-x-3">
+                            <Palette className="w-4 h-4 text-purple-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Color
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.color}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-3">
+                            <User className="w-4 h-4 text-orange-500" />
+                            <div>
+                              <span className="text-lg uppercase tracking-wide">
+                                Owner/Seller
+                              </span>
+                              <p className="text-lg font-semibold">
+                                {row.original.owner}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TooltipContent>
+                      </CardContent>
+                    </Card>
+                  </TooltipContent>
+                </Portal>
               </Tooltip>
             </TooltipProvider>
           );
@@ -710,7 +733,7 @@ export function ExamplePage() {
 
         {/* Global Search Input */}
         <div className="mb-4 flex justify-between items-center">
-          <input
+          <Input
             type="text"
             value={globalFilter ?? ''}
             onChange={(e) => setGlobalFilter(e.target.value)}
@@ -815,26 +838,34 @@ export function ExamplePage() {
           </div>
         </div>
 
-        <DataGrid
-          table={table}
-          recordCount={table.getFilteredRowModel().rows.length}
-          tableLayout={{
-            cellBorder: true,
-            width: 'auto',
-            columnsVisibility: true,
-            columnsMovable: true,
-          }}
-        >
-          <div className="w-full space-y-2.5">
-            <DataGridContainer>
-              <ScrollArea>
-                <DataGridTable />
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </DataGridContainer>
-            <DataGridPagination />
-          </div>
-        </DataGrid>
+        <div className="grid">
+          <DataGrid
+            table={table}
+            recordCount={table.getFilteredRowModel().rows.length}
+            tableLayout={{
+              cellBorder: true,
+              width: 'auto',
+              columnsVisibility: true,
+              columnsMovable: true,
+              columnsDraggable: true,
+              columnsPinnable: true,
+            }}
+          >
+            <div className="w-full space-y-2.5">
+              <div className="grid">
+                <DataGridContainer>
+                  <ScrollArea>
+                    <div className="grid">
+                      <DataGridTableDnd handleDragEnd={handleDragEnd} />
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
+                </DataGridContainer>
+              </div>
+              <DataGridPagination />
+            </div>
+          </DataGrid>
+        </div>
 
         {/* {Dialog Demo} */}
         <DialogDemo open={open} setOpen={setOpen} linked={linked} />

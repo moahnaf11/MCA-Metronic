@@ -17,7 +17,7 @@ const EditableSelect = ({ getValue }: CellContext<Vehicle, unknown>) => {
     setValue(initialValue as string);
   }, [initialValue]);
   return (
-    <Select disabled value={value} onValueChange={setValue}>
+    <Select  value={value} onValueChange={setValue}>
       <SelectTrigger className="min-w-min">
         <SelectValue>{value}</SelectValue>
       </SelectTrigger>
