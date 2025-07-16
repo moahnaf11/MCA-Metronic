@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { Helmet } from 'react-helmet';
+import { Link } from 'react-router';
 import highlightMatch from '@/lib/dataFilters';
 import { cn } from '@/lib/utils';
 import {
@@ -45,6 +46,7 @@ import {
   Vehicle,
   vehicles,
 } from '@/lib/vehicles';
+import { VinCopyButton } from '@/lib/vinCopyButton';
 import { Button } from '@/components/ui/button';
 import { Calendar as DateRangePicker } from '@/components/ui/calendar';
 import {
@@ -57,8 +59,9 @@ import {
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
-import { DataGridTable } from '@/components/ui/data-grid-table';
+// import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridTableDnd } from '@/components/ui/data-grid-table-dnd';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -241,7 +244,16 @@ export function ArchivedPage() {
         header: ({ column }) => (
           <DataGridColumnHeader title="ID" visibility={true} column={column} />
         ),
-        cell: (info) => info.getValue(),
+        cell: ({ row }) => {
+          const rowData = row.original;
+          const id = rowData.id;
+
+          return (
+            <Link to={`/cars/${id}`} state={{ data: rowData }}>
+              {id}
+            </Link>
+          );
+        },
         enableSorting: true,
         meta: { headerTitle: 'ID' },
         enableHiding: false,
@@ -261,10 +273,6 @@ export function ArchivedPage() {
         header: 'VIN',
         cell: ({ row }) => {
           const vehicle = row.original;
-          const copyToClipboard = (e: React.MouseEvent) => {
-            e.stopPropagation(); // Prevent tooltip or row click behavior
-            navigator.clipboard.writeText(vehicle.vin);
-          };
           return (
             <TooltipProvider>
               <Tooltip>
@@ -274,13 +282,7 @@ export function ArchivedPage() {
                       {highlightMatch(vehicle.vin, globalFilter)}
                     </span>
                   </TooltipTrigger>
-                  <button
-                    onClick={copyToClipboard}
-                    className="hover:text-blue-600"
-                    title="Copy VIN"
-                  >
-                    <Copy className="size-4" />
-                  </button>
+                  <VinCopyButton vin={vehicle.vin} />
                 </div>
 
                 <Portal>
@@ -606,7 +608,7 @@ export function ArchivedPage() {
 
         {/* Global Search Input */}
         <div className="mb-4 flex justify-between items-center">
-          <input
+          <Input
             type="text"
             value={globalFilter ?? ''}
             onChange={(e) => setGlobalFilter(e.target.value)}
