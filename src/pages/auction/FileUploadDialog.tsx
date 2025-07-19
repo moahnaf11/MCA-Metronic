@@ -4,7 +4,6 @@ import {
   Download,
   FileArchiveIcon,
   FileSpreadsheetIcon,
-  FileText,
   FileTextIcon,
   HeadphonesIcon,
   ImageIcon,
@@ -32,15 +31,6 @@ import {
 } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import DialogContent, {
-  Dialog,
-  DialogBody,
-  DialogClose,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -84,26 +74,12 @@ export default function TableUpload({
       type: 'application/pdf',
       url: toAbsoluteUrl('/media/files/document.pdf'),
     },
-    {
-      id: 'default-doc-2',
-      name: 'intro.zip',
-      size: 252846,
-      type: 'application/zip',
-      url: toAbsoluteUrl('/media/files/intro.zip'),
-    },
     // {
-    //   id: 'default-doc-3',
-    //   name: 'conclusion.xlsx',
-    //   size: 353126,
-    //   type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    //   url: toAbsoluteUrl('/media/files/conclusion.xlsx'),
-    // },
-    // {
-    //   id: 'default-doc-4',
-    //   name: 'package.json',
-    //   size: 697,
-    //   type: 'application/json',
-    //   url: toAbsoluteUrl('/media/files/package.json'),
+    //   id: 'default-doc-2',
+    //   name: 'intro.zip',
+    //   size: 252846,
+    //   type: 'application/zip',
+    //   url: toAbsoluteUrl('/media/files/intro.zip'),
     // },
   ];
 
@@ -252,252 +228,218 @@ export default function TableUpload({
   };
 
   return (
-    <Dialog
-    // open={open}
-    // onOpenChange={(isOpen) => {
-    //   setOpen(isOpen);
-    //   if (!isOpen) {
-    //     form.reset();
-    //   }
-    // }}
-    >
-      <DialogTrigger asChild>
-        <Button size="icon" variant="secondary" className="size-8">
-          <FileText className="size-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="min-w-[80%]">
-        <DialogHeader>
-          <DialogTitle>Upload Auction & Run Lists</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          <div className={cn('w-full space-y-4', className)}>
-            {/* Upload Area */}
-            <div
-              className={cn(
-                'relative rounded-lg border border-dashed p-6 text-center transition-colors',
-                isDragging
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted-foreground/25 hover:border-muted-foreground/50',
-              )}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <input {...getInputProps()} className="sr-only" />
+    <div className={cn('w-full space-y-4', className)}>
+      {/* Upload Area */}
+      <div
+        className={cn(
+          'relative rounded-lg border border-dashed p-6 text-center transition-colors',
+          isDragging
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-muted-foreground/50',
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        <input {...getInputProps()} className="sr-only" />
 
-              <div className="flex flex-col items-center gap-4">
-                <div
-                  className={cn(
-                    'flex h-12 w-12 items-center justify-center rounded-full bg-muted transition-colors',
-                    isDragging
-                      ? 'border-primary bg-primary/10'
-                      : 'border-muted-foreground/25',
-                  )}
-                >
-                  <Upload className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">
-                    Drop files here or{' '}
-                    <button
-                      type="button"
-                      onClick={openFileDialog}
-                      className="cursor-pointer text-primary underline-offset-4 hover:underline"
-                    >
-                      browse files
-                    </button>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Maximum file size: {formatBytes(maxSize)} • Maximum files:{' '}
-                    {maxFiles}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Files Table */}
-            {uploadFiles.length > 0 && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium">
-                    Files ({uploadFiles.length})
-                  </h3>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={openFileDialog}
-                      variant="outline"
-                      size="sm"
-                    >
-                      <CloudUpload />
-                      Add files
-                    </Button>
-                    <Button onClick={clearFiles} variant="outline" size="sm">
-                      <Trash2 />
-                      Remove all
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="text-xs">
-                        <TableHead className="h-9">Name</TableHead>
-                        <TableHead className="h-9">Type</TableHead>
-                        <TableHead className="h-9">Size</TableHead>
-                        <TableHead className="h-9 w-[100px] text-end">
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {uploadFiles.map((fileItem) => (
-                        <TableRow key={fileItem.id}>
-                          <TableCell className="py-2 ps-1.5">
-                            <div className="flex items-center gap-1">
-                              <div
-                                className={cn(
-                                  'size-8 shrink-0 relative flex items-center justify-center text-muted-foreground/80',
-                                )}
-                              >
-                                {fileItem.status === 'uploading' ? (
-                                  <div className="relative">
-                                    {/* Circular progress background */}
-                                    <svg
-                                      className="size-8 -rotate-90"
-                                      viewBox="0 0 32 32"
-                                    >
-                                      <circle
-                                        cx="16"
-                                        cy="16"
-                                        r="14"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        className="text-muted-foreground/20"
-                                      />
-                                      {/* Progress circle */}
-                                      <circle
-                                        cx="16"
-                                        cy="16"
-                                        r="14"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeDasharray={`${2 * Math.PI * 14}`}
-                                        strokeDashoffset={`${2 * Math.PI * 14 * (1 - fileItem.progress / 100)}`}
-                                        className="text-primary transition-all duration-300"
-                                        strokeLinecap="round"
-                                      />
-                                    </svg>
-                                    {/* File icon in center */}
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      {getFileIcon(fileItem.file)}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="not-[]:size-8 flex items-center justify-center">
-                                    {getFileIcon(fileItem.file)}
-                                  </div>
-                                )}
-                              </div>
-                              <p className="flex items-center gap-1 truncate text-sm font-medium">
-                                {fileItem.file.name}
-                                {fileItem.status === 'error' && (
-                                  <Badge
-                                    variant="destructive"
-                                    size="sm"
-                                    appearance="light"
-                                  >
-                                    Error
-                                  </Badge>
-                                )}
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {getFileTypeLabel(fileItem.file)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-2 text-sm text-muted-foreground">
-                            {formatBytes(fileItem.file.size)}
-                          </TableCell>
-                          <TableCell className="py-2 pe-1">
-                            <div className="flex items-center gap-1">
-                              {fileItem.preview && (
-                                <Button
-                                  variant="dim"
-                                  size="icon"
-                                  className="size-8"
-                                  asChild
-                                >
-                                  <Link to={fileItem.preview} target="_blank">
-                                    <Download className="size-3.5" />
-                                  </Link>
-                                </Button>
-                              )}
-                              {fileItem.status === 'error' ? (
-                                <Button
-                                  onClick={() => retryUpload(fileItem.id)}
-                                  variant="dim"
-                                  size="icon"
-                                  className="size-8 text-destructive/80 hover:text-destructive"
-                                >
-                                  <RefreshCwIcon className="size-3.5" />
-                                </Button>
-                              ) : (
-                                <Button
-                                  onClick={() => removeUploadFile(fileItem.id)}
-                                  variant="dim"
-                                  size="icon"
-                                  className="size-8"
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className={cn(
+              'flex h-12 w-12 items-center justify-center rounded-full bg-muted transition-colors',
+              isDragging
+                ? 'border-primary bg-primary/10'
+                : 'border-muted-foreground/25',
             )}
-
-            {/* Error Messages */}
-            {errors.length > 0 && (
-              <Alert variant="destructive" appearance="light" className="mt-5">
-                <AlertIcon>
-                  <TriangleAlert />
-                </AlertIcon>
-                <AlertContent>
-                  <AlertTitle>File upload error(s)</AlertTitle>
-                  <AlertDescription>
-                    {errors.map((error, index) => (
-                      <p key={index} className="last:mb-0">
-                        {error}
-                      </p>
-                    ))}
-                  </AlertDescription>
-                </AlertContent>
-              </Alert>
-            )}
+          >
+            <Upload className="h-5 w-5 text-muted-foreground" />
           </div>
-        </DialogBody>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline">
-              Close
-            </Button>
-          </DialogClose>
-          <Button type="submit">Submit</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium">
+              Drop files here or{' '}
+              <button
+                type="button"
+                onClick={openFileDialog}
+                className="cursor-pointer text-primary underline-offset-4 hover:underline"
+              >
+                browse files
+              </button>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Maximum file size: {formatBytes(maxSize)} • Maximum files:{' '}
+              {maxFiles}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Files Table */}
+      {uploadFiles.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">
+              Files ({uploadFiles.length})
+            </h3>
+            <div className="flex gap-2">
+              <Button onClick={openFileDialog} variant="outline" size="sm">
+                <CloudUpload />
+                Add files
+              </Button>
+              <Button onClick={clearFiles} variant="outline" size="sm">
+                <Trash2 />
+                Remove all
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs">
+                  <TableHead className="h-9">Name</TableHead>
+                  <TableHead className="h-9">Type</TableHead>
+                  <TableHead className="h-9">Size</TableHead>
+                  <TableHead className="h-9 w-[100px] text-end">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {uploadFiles.map((fileItem) => (
+                  <TableRow key={fileItem.id}>
+                    <TableCell className="py-2 ps-1.5">
+                      <div className="flex items-center gap-1">
+                        <div
+                          className={cn(
+                            'size-8 shrink-0 relative flex items-center justify-center text-muted-foreground/80',
+                          )}
+                        >
+                          {fileItem.status === 'uploading' ? (
+                            <div className="relative">
+                              {/* Circular progress background */}
+                              <svg
+                                className="size-8 -rotate-90"
+                                viewBox="0 0 32 32"
+                              >
+                                <circle
+                                  cx="16"
+                                  cy="16"
+                                  r="14"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  className="text-muted-foreground/20"
+                                />
+                                {/* Progress circle */}
+                                <circle
+                                  cx="16"
+                                  cy="16"
+                                  r="14"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeDasharray={`${2 * Math.PI * 14}`}
+                                  strokeDashoffset={`${2 * Math.PI * 14 * (1 - fileItem.progress / 100)}`}
+                                  className="text-primary transition-all duration-300"
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              {/* File icon in center */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                {getFileIcon(fileItem.file)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="not-[]:size-8 flex items-center justify-center">
+                              {getFileIcon(fileItem.file)}
+                            </div>
+                          )}
+                        </div>
+                        <p className="flex items-center gap-1 truncate text-sm font-medium">
+                          {fileItem.file.name}
+                          {fileItem.status === 'error' && (
+                            <Badge
+                              variant="destructive"
+                              size="sm"
+                              appearance="light"
+                            >
+                              Error
+                            </Badge>
+                          )}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {getFileTypeLabel(fileItem.file)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-2 text-sm text-muted-foreground">
+                      {formatBytes(fileItem.file.size)}
+                    </TableCell>
+                    <TableCell className="py-2 pe-1">
+                      <div className="flex items-center gap-1">
+                        {fileItem.preview && (
+                          <Button
+                            variant="dim"
+                            size="icon"
+                            className="size-8"
+                            asChild
+                          >
+                            <Link to={fileItem.preview} target="_blank">
+                              <Download className="size-3.5" />
+                            </Link>
+                          </Button>
+                        )}
+                        {fileItem.status === 'error' ? (
+                          <Button
+                            onClick={() => retryUpload(fileItem.id)}
+                            variant="dim"
+                            size="icon"
+                            className="size-8 text-destructive/80 hover:text-destructive"
+                          >
+                            <RefreshCwIcon className="size-3.5" />
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => removeUploadFile(fileItem.id)}
+                            variant="dim"
+                            size="icon"
+                            className="size-8"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Error Messages */}
+      {errors.length > 0 && (
+        <Alert variant="destructive" appearance="light" className="mt-5">
+          <AlertIcon>
+            <TriangleAlert />
+          </AlertIcon>
+          <AlertContent>
+            <AlertTitle>File upload error(s)</AlertTitle>
+            <AlertDescription>
+              {errors.map((error, index) => (
+                <p key={index} className="last:mb-0">
+                  {error}
+                </p>
+              ))}
+            </AlertDescription>
+          </AlertContent>
+        </Alert>
+      )}
+    </div>
   );
 }

@@ -25,7 +25,7 @@ import {
   // subMonths,
   // subYears,
 } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, FileText } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import {
   Auction,
@@ -39,10 +39,20 @@ import highlightMatch from '@/lib/dataFilters';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar as DateRangePicker } from '@/components/ui/calendar';
+import { CardTitle } from '@/components/ui/card';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { DataGridTable } from '@/components/ui/data-grid-table';
+import DialogContent, {
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
@@ -351,7 +361,38 @@ const AuctionList = () => {
         cell: () => (
           <div className="flex items-center gap-2">
             <LocationDialog />
-            <TableUpload maxSize={10} maxFiles={2} />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="icon" variant="secondary" className="size-8">
+                  <FileText className="size-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="min-w-max">
+                <DialogHeader>
+                  <DialogTitle>Upload Auction & Run Lists</DialogTitle>
+                </DialogHeader>
+                <DialogBody>
+                  <div className="flex gap-7">
+                    <div className="flex shrink-0 flex-1 flex-col">
+                      <CardTitle>Auctions List</CardTitle>
+                      <TableUpload maxSize={10000000} maxFiles={1} />
+                    </div>
+                    <div className="flex shrink-0 flex-1 flex-col">
+                      <CardTitle>Run List</CardTitle>
+                      <TableUpload maxSize={10000000} maxFiles={1} />
+                    </div>
+                  </div>
+                </DialogBody>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                      Close
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Submit</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         ),
       },

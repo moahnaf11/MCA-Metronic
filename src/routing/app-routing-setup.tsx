@@ -38,6 +38,7 @@ import {
   AccountTeamsStarterPage,
   AccountUserProfilePage,
 } from '@/pages/account';
+import CreateAuction from '@/pages/addAuction/createAuction';
 import { ArchivedPage } from '@/pages/archived/archived';
 import AuctionList from '@/pages/auction/auction-list';
 import {
@@ -111,6 +112,7 @@ export function AppRoutingSetup() {
           <Route path="/form-page" element={<FormPage />} />
           <Route path="/cars/:id" element={<Car />} />
           <Route path="/auctions-list" element={<AuctionList />} />
+          <Route path="/auctions-create" element={<CreateAuction />} />
           {/* Add your route */}
           <Route
             path="/public-profile/profiles/default/"
