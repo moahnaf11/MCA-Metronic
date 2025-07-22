@@ -14,6 +14,7 @@ import Papa from 'papaparse';
 import { FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { AuctionVehicle, csv, downloadCSV } from '@/lib/auctionVehicles';
+import { combineDateTime } from '@/lib/LocalDateTime';
 import { FileWithPreview } from '@/hooks/use-file-upload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -132,16 +133,18 @@ export default function CreateAuction() {
     })
     .refine(
       (data) => {
-        // Combine start date + time
-        const start = new Date(`${data.date}T${data.time}`);
-        // Combine end date + time
-        const end = new Date(`${data.enddate}T${data.endtime}`);
-        // Check that end is after or equal to start
-        return end >= start;
+        // Don't run validation if any of the required fields are missing
+        if (!data.date || !data.time || !data.enddate || !data.endtime) {
+          return true; // Skip this validation — treat as valid for now
+        }
+
+        const start = combineDateTime(data.date, data.time);
+        const end = combineDateTime(data.enddate, data.endtime);
+        return end > start;
       },
       {
         message: 'End date and time cannot be before start date and time',
-        path: ['enddate'], // You can attach error to enddate or endtime
+        path: ['enddate'], // or ['endtime'], or keep as is
       },
     );
 
@@ -162,7 +165,16 @@ export default function CreateAuction() {
   const handleNext = async () => {
     // Define fields to validate based on the current step
     const fieldsPerStep: Record<number, (keyof z.infer<typeof schema>)[]> = {
-      1: ['date', 'time', 'index', 'name', 'emirate', 'location'],
+      1: [
+        'date',
+        'time',
+        'index',
+        'name',
+        'emirate',
+        'location',
+        'enddate',
+        'endtime',
+      ],
       2: [],
     };
 
@@ -374,6 +386,7 @@ export default function CreateAuction() {
                                       methods.setValue('date', dateOnly, {
                                         shouldValidate: true,
                                       });
+                                      methods.trigger('enddate');
                                     }}
                                     autoFocus
                                     disabled={[{ before: today }]}
@@ -393,13 +406,14 @@ export default function CreateAuction() {
                                                   variant="primary"
                                                   size="sm"
                                                   className="w-full"
-                                                  onClick={() =>
+                                                  onClick={() => {
                                                     methods.setValue(
                                                       'time',
                                                       timeSlot,
                                                       { shouldValidate: true },
-                                                    )
-                                                  }
+                                                    );
+                                                    methods.trigger('enddate');
+                                                  }}
                                                   disabled={!available}
                                                 >
                                                   {timeSlot}
@@ -509,6 +523,10 @@ export default function CreateAuction() {
                                       methods.setValue('enddate', dateOnly, {
                                         shouldValidate: true,
                                       });
+
+                                      if (methods.watch('endtime')) {
+                                        methods.trigger('enddate');
+                                      }
                                     }}
                                     autoFocus
                                     disabled={[{ before: today }]}
@@ -528,13 +546,14 @@ export default function CreateAuction() {
                                                   variant="primary"
                                                   size="sm"
                                                   className="w-full"
-                                                  onClick={() =>
+                                                  onClick={() => {
                                                     methods.setValue(
                                                       'endtime',
                                                       timeSlot,
                                                       { shouldValidate: true },
-                                                    )
-                                                  }
+                                                    );
+                                                    methods.trigger('enddate');
+                                                  }}
                                                   disabled={!available}
                                                 >
                                                   {timeSlot}

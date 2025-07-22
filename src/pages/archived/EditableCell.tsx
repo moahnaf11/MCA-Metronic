@@ -1,20 +1,16 @@
 import { Fragment, useEffect, useState } from 'react';
-import { RiAlertFill } from '@remixicon/react';
 import { CellContext } from '@tanstack/react-table';
 import {
-  Alert,
-  AlertContent,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-} from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import DialogContent, {
-  Dialog,
-  DialogBody,
-} from '@/components/ui/dialog';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 function EditableCell<TData>({ cell }: CellContext<TData, string>) {
   const initialValue = cell.getValue();
@@ -63,48 +59,24 @@ function EditableCell<TData>({ cell }: CellContext<TData, string>) {
         value={value}
       />
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent close={false} className="max-h-[90%] p-0">
-          <ScrollArea className="overflow-y-auto">
-            <DialogBody className="">
-              <Alert
-                className=" rounded-lg shadow-lg"
-                variant="destructive"
-                appearance="light"
-                close={false}
-              >
-                <AlertIcon>
-                  <RiAlertFill />
-                </AlertIcon>
-                <AlertContent className="flex-1">
-                  <AlertTitle>Warning! Changes will be made</AlertTitle>
-                  <AlertDescription>
-                    <p>
-                      Are you sure you want to change the value of this cell?
-                    </p>
-                    <div className="space-x-3.5 flex justify-end mt-4">
-                      <Button
-                        onClick={handleProceed}
-                        variant="destructive"
-                        size="md"
-                      >
-                        Proceed
-                      </Button>
-                      <Button
-                        onClick={handleCancel}
-                        variant="secondary"
-                        size="md"
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </AlertDescription>
-                </AlertContent>
-              </Alert>
-            </DialogBody>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Your Action</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to make changes to this cell?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancel}>
+              Go Back
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleProceed} variant="destructive">
+              Proceed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Fragment>
   );
 }
