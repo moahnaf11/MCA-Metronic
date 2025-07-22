@@ -54,5 +54,14 @@
   "FORM.PASSWORD_MAX_LENGTH": "Password must not exceed 20 characters.",
   "FORM.INVALID_DATE": "Please select a valid date.",
   "FORM.INVALID_DATE_RANGE": "Please select a valid date range.",
-  "FORM.INVALID_OPTION": "Please select a valid option."
+  "FORM.INVALID_OPTION": "Please select a valid option.",
+  "INVENTORY": "Inventory",
+  "INVENTORY.CARS": "Cars",
+  "INVENTORY.CARS.CAR": "Car",
+  "INVENTORY.CARS.DESCRIPTION": "Manage your car inventory with ease. Add, edit, and view car details.",
+  "INVENTORY.CARS.ADD_NEW_CAR": "Add New Car",
+  "INVENTORY.CARS.NEW_DESCRIPTION":"Add, edit, and view car details easily.",
+  "INVENTORY.CARS.EDIT_CAR": "Edit Car",
+  "INVENTORY.CARS.CAR_DETAILS": "Car Details",
+  "INVENTORY.CARS.CAR_LIST": "Car List"
 }

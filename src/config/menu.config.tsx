@@ -77,6 +77,13 @@ export const MENU_SIDEBAR: MenuConfig = [
   },
   { title: 'Form Page', path: '/form-page' },
   {
+    title: 'Inventory',
+    icon: Settings,
+    children: [
+      { title: 'Cars', path: '/inventory/cars' }
+    ]
+  },
+  {
     title: 'Public Profile',
     icon: UserCircle,
     children: [

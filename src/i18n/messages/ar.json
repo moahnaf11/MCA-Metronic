@@ -54,5 +54,14 @@
   "FORM.DESCRIPTION": "هذه هي صفحة نموذج مثال",
   "FORM.INVALID_DATE": "يرجى اختيار تاريخ صالح.",
   "FORM.INVALID_DATE_RANGE": "يرجى اختيار نطاق تاريخ صالح.",
-  "FORM.INVALID_OPTION": "يرجى اختيار خيار صالح."
+  "FORM.INVALID_OPTION": "يرجى اختيار خيار صالح.",
+  "INVENTORY": "المخزون",
+  "INVENTORY.CARS": "السيارات",
+  "INVENTORY.CARS.CAR": "سيارة",
+  "INVENTORY.CARS.DESCRIPTION": "إدارة مخزون سيارتك بسهولة. إضافة وتعديل وعرض تفاصيل السيارة.",
+  "INVENTORY.CARS.ADD_NEW_CAR": "إضافة سيارة جديدة",
+  "INVENTORY.CARS.NEW_DESCRIPTION":"إضافة وتعديل وعرض تفاصيل السيارة بسهولة.",
+  "INVENTORY.CARS.EDIT_CAR": "تعديل السيارة",
+  "INVENTORY.CARS.CAR_DETAILS": "تفاصيل السيارة",
+  "INVENTORY.CARS.CAR_LIST": "قائمة السيارات"
 }
