@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { addDays, format } from 'date-fns';
 import {
@@ -8,11 +8,13 @@ import {
   CreditCard,
   ListTodo,
   LoaderCircleIcon,
-  LockKeyhole,
   X,
 } from 'lucide-react';
+import Papa from 'papaparse';
 import { FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { AuctionVehicle, csv, downloadCSV } from '@/lib/auctionVehicles';
+import { FileWithPreview } from '@/hooks/use-file-upload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -52,11 +54,12 @@ import {
   StepperTitle,
   StepperTrigger,
 } from '@/components/ui/stepper';
+import TableUpload from '../auction/FileUploadDialog';
+import VehiclesDialog from './VehiclesDialog';
 
 const steps = [
   { title: 'Enter Auction Details', icon: BookUser },
   { title: 'Select Cars', icon: CreditCard },
-  { title: 'Select timing', icon: LockKeyhole },
   { title: 'Preview Form', icon: ListTodo },
 ];
 
@@ -96,7 +99,10 @@ const timeSlots = [
 ];
 
 export default function CreateAuction() {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(2);
+  const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([]);
+  const [parsedCars, setParsedCars] = useState<AuctionVehicle[]>([]);
+  const [open, setOpen] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -120,8 +126,6 @@ export default function CreateAuction() {
       endtime: z.string().nonempty({ message: 'Time is required.' }),
 
       name: z.string().min(1, 'Auction name is required'),
-      cardNumber: z.string().min(3, 'Card number must be 16 digits'),
-      otp: z.string().min(4, 'OTP is required'),
       index: z.string().min(1, 'Index is required'),
       emirate: z.string().min(1, 'Emirate is required'),
       location: z.string().min(1, 'Location is required'),
@@ -152,8 +156,6 @@ export default function CreateAuction() {
       name: '',
       emirate: '',
       location: '',
-      cardNumber: '',
-      otp: '',
     },
   });
 
@@ -161,8 +163,7 @@ export default function CreateAuction() {
     // Define fields to validate based on the current step
     const fieldsPerStep: Record<number, (keyof z.infer<typeof schema>)[]> = {
       1: ['date', 'time', 'index', 'name', 'emirate', 'location'],
-      2: ['cardNumber'],
-      3: ['otp'],
+      2: [],
     };
 
     const fieldsToValidate = fieldsPerStep[currentStep];
@@ -178,6 +179,26 @@ export default function CreateAuction() {
       setCurrentStep((prev) => prev + 1);
     }
   };
+
+  useEffect(() => {
+    if (uploadedFiles.length === 0) return;
+
+    const file = uploadedFiles[0].file;
+    if (!(file instanceof File)) return;
+
+    Papa.parse<AuctionVehicle>(file, {
+      header: true, // expects first row to be column names
+      skipEmptyLines: true,
+      complete: (result) => {
+        console.log('Parsed CSV result:', result.data);
+        setParsedCars(result.data); // store for table rendering
+        setOpen(true);
+      },
+      error: (err) => {
+        console.error('Error parsing CSV:', err);
+      },
+    });
+  }, [uploadedFiles]);
 
   return (
     <div className="container mx-auto p-6">
@@ -261,7 +282,10 @@ export default function CreateAuction() {
 
             {/* StepperContent */}
             <StepperPanel className="text-sm">
-              <StepperContent className="flex flex-col gap-3" value={1}>
+              <StepperContent
+                className="flex max-w-[50%] flex-col gap-6"
+                value={1}
+              >
                 <FormField
                   name="index"
                   render={({ field }) => (
@@ -544,18 +568,6 @@ export default function CreateAuction() {
                   />
                 </div>
 
-                <FormField
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Auction Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Auction Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <div className="flex justify-center gap-3">
                   <FormField
                     name="emirate"
@@ -651,36 +663,20 @@ export default function CreateAuction() {
               </StepperContent>
 
               <StepperContent value={2}>
-                <FormField
-                  name="cardNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Card Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="1234 5678 9012 3456" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <Button onClick={() => downloadCSV(csv)}>csv</Button>
+                <TableUpload
+                  maxSize={10000000}
+                  maxFiles={1}
+                  onFilesChange={(files) => setUploadedFiles(files)}
+                />
+                <VehiclesDialog
+                  open={open}
+                  setOpen={setOpen}
+                  parsedCars={parsedCars}
                 />
               </StepperContent>
 
               <StepperContent value={3}>
-                <FormField
-                  name="otp"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>OTP</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter OTP" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </StepperContent>
-
-              <StepperContent value={4}>
                 <div className="text-left">
                   <h2 className="text-lg font-semibold mb-4">Preview:</h2>
                   <pre className="bg-muted p-4 rounded">
@@ -701,7 +697,10 @@ export default function CreateAuction() {
               <Button
                 variant="outline"
                 onClick={handleNext}
-                disabled={currentStep === steps.length}
+                disabled={
+                  currentStep === steps.length ||
+                  (currentStep === 2 && uploadedFiles.length === 0)
+                }
               >
                 Next
               </Button>

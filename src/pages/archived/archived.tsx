@@ -235,7 +235,7 @@ export function ArchivedPage() {
   };
 
   // Define columns for @tanstack/react-table
-  const columns = useMemo<ColumnDef<Vehicle>[]>(
+  const columns = useMemo<ColumnDef<Vehicle, string>[]>(
     () => [
       {
         accessorKey: 'id',
@@ -403,7 +403,7 @@ export function ArchivedPage() {
         id: 'buyNow',
         header: 'Buy Now',
         cell: (info) => {
-          const isBuyNow = info.getValue() as boolean;
+          const isBuyNow = info.getValue();
           return isBuyNow ? (
             <CheckCircle className="w-5 h-5 text-green-500" />
           ) : (
@@ -471,7 +471,7 @@ export function ArchivedPage() {
         accessorKey: 'soldPrice',
         id: 'soldPrice',
         header: 'Sold Price',
-        cell: (info) => `$${(info.getValue() as number).toLocaleString()}`,
+        cell: (info) => `$${(info.getValue()).toLocaleString()}`,
         enableSorting: false,
       },
       {
