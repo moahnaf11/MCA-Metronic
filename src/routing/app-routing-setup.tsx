@@ -99,6 +99,9 @@ import {
   WishlistPage,
 } from '@/pages/store-client';
 import { Navigate, Route, Routes } from 'react-router';
+import Cars from '@/pages/cars/Cars';
+import CarUpsert from '@/pages/cars/CarUpsert';
+import CarsImport from '@/pages/cars/CarsImport';
 
 export function AppRoutingSetup() {
   return (
@@ -113,6 +116,10 @@ export function AppRoutingSetup() {
           <Route path="/cars/:id" element={<Car />} />
           <Route path="/auctions-list" element={<AuctionList />} />
           <Route path="/auctions-create" element={<CreateAuction />} />
+          <Route path="/inventory/cars" element={<Cars />} />
+          <Route path="/inventory/cars/add" element={<CarUpsert />} />
+          <Route path="/inventory/cars/import" element={<CarsImport />} />
+          <Route path="/inventory/cars/view/:id" element={<CarUpsert />} />
           {/* Add your route */}
           <Route
             path="/public-profile/profiles/default/"
