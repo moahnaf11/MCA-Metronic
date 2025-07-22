@@ -10,17 +10,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-function EditableCell<TData>({ cell }: CellContext<TData, string>) {
-  const initialValue = cell.getValue();
-  // const [showAlert, setShowAlert] = useState(false);
-  const [value, setValue] = useState(initialValue);
+function EditableSelect<TData>({ getValue }: CellContext<TData, string>) {
+  const initialValue = getValue();
+  const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue]);
 
   const handleProceed = async () => {
     // try {
@@ -38,26 +39,37 @@ function EditableCell<TData>({ cell }: CellContext<TData, string>) {
 
   const handleCancel = () => {
     setValue(initialValue);
-    // setShowAlert(false);
     setOpen(false);
     console.log('clicked');
   };
 
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
   return (
     <Fragment>
-      <Input
-        onBlur={() => {
+      <Select
+        value={value}
+        onValueChange={(value) => {
           if (initialValue !== value) {
-            // setShowAlert(true);
             setOpen(true);
+            setValue(value);
           } else {
             setValue(initialValue);
           }
         }}
-        className="w-min"
-        onChange={(e) => setValue(e.target.value)}
-        value={value}
-      />
+      >
+        <SelectTrigger className="min-w-min">
+          <SelectValue>{value}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="red"> Red</SelectItem>
+          <SelectItem value="green">Green</SelectItem>
+          <SelectItem value="blue"> Blue</SelectItem>
+          <SelectItem value="black"> Black</SelectItem>
+          <SelectItem value="white"> White</SelectItem>
+        </SelectContent>
+      </Select>
 
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
@@ -81,4 +93,4 @@ function EditableCell<TData>({ cell }: CellContext<TData, string>) {
   );
 }
 
-export default EditableCell;
+export default EditableSelect;

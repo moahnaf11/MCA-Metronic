@@ -28,7 +28,9 @@ import DialogContent, {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import EditableCell from '../archived/EditableCell';
+import EditableCell from '../../lib/EditableCell';
+import EditableSelect from '../../lib/EditableSelect';
+import AddCarsDialog from './AddCarsDialog';
 
 type VehiclesDialogProps = {
   open: boolean;
@@ -112,33 +114,7 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
         accessorKey: 'color',
         id: 'color',
         header: 'Color',
-        cell: (info) => (
-          <span
-            className="px-2 py-1 rounded-full text-xs font-medium"
-            style={{
-              backgroundColor:
-                {
-                  WHITE: '#F3F4F6',
-                  BLACK: '#1F2937',
-                  SILVER: '#D1D5DB',
-                  BLUE: '#DBEAFE',
-                  RED: '#FEE2E2',
-                  GRAY: '#E5E7EB',
-                }[info.getValue() as string] || '#E0E7FF',
-              color:
-                {
-                  WHITE: '#374151',
-                  BLACK: '#F9FAFB',
-                  SILVER: '#4B5563',
-                  BLUE: '#1D4ED8',
-                  RED: '#B91C1C',
-                  GRAY: '#374151',
-                }[info.getValue() as string] || '#4338CA',
-            }}
-          >
-            {info.getValue() as string}
-          </span>
-        ),
+        cell: EditableSelect,
         enableSorting: false,
       },
     ],
@@ -181,9 +157,14 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
         }
       }}
     >
-      <DialogContent dir={direction} className="min-w-max max-h-[90%]">
-        <DialogHeader>
+      <DialogContent
+        close={false}
+        dir={direction}
+        className="min-w-max max-h-[90%]"
+      >
+        <DialogHeader className="flex flex-row justify-between items-center gap-3">
           <DialogTitle>Cars Table for Auction</DialogTitle>
+          <AddCarsDialog />
         </DialogHeader>
         <ScrollArea className="overflow-y-auto">
           <DialogBody className="">

@@ -80,9 +80,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import EditableCell from '../../lib/EditableCell';
+import EditableSelect from '../../lib/EditableSelect';
 import HistoryDrawer from '../example/HistoryDrawer';
-import EditableCell from './EditableCell';
-import EditableSelect from './EditableSelect';
 import GatePassDialog from './GatePassDialog';
 import { Portal } from './Portal';
 
@@ -471,7 +471,7 @@ export function ArchivedPage() {
         accessorKey: 'soldPrice',
         id: 'soldPrice',
         header: 'Sold Price',
-        cell: (info) => `$${(info.getValue()).toLocaleString()}`,
+        cell: (info) => `$${info.getValue().toLocaleString()}`,
         enableSorting: false,
       },
       {
