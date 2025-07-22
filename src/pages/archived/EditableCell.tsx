@@ -1,30 +1,103 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { RiAlertFill } from '@remixicon/react';
 import { CellContext } from '@tanstack/react-table';
-import { Vehicle } from '@/lib/vehicles';
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Portal } from './Portal';
 
-const EditableCell = ({
-  row,
-  getValue,
-  column,
-}: CellContext<Vehicle, unknown>) => {
-  const initialValue = getValue();
-  const [value, setValue] = useState<string>('');
+function EditableCell<TData>({ cell }: CellContext<TData, string>) {
+  const initialValue = cell.getValue();
+  const [showAlert, setShowAlert] = useState(false);
+  const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
-    setValue(initialValue as string);
+    setValue(initialValue);
   }, [initialValue]);
 
+  const handleProceed = async () => {
+    // try {
+    //   // Example API call
+    //   await fetch('/api/update', {
+    //     method: 'POST',
+    //     body: JSON.stringify({ value: pendingValue }),
+    //   });
+    //   // Close alert after API
+    //   setShowAlert(false);
+    // } catch (err) {
+    //   console.error(err);
+    // }
+  };
+
+  const handleCancel = () => {
+    setValue(initialValue);
+    setShowAlert(false);
+    console.log("clicked")
+  };
+
   return (
-    <Input
-      //   onBlur={() => {
-      //      confirm('Warning! Do you want to make changes');
-      //   }}
-      className="w-min"
-      onChange={(e) => setValue(e.target.value)}
-      value={value}
-    />
+    <Fragment>
+      <Input
+        onBlur={() => {
+          if (initialValue !== value) {
+            setShowAlert(true);
+          } else {
+            setValue(initialValue);
+          }
+        }}
+        className="w-min"
+        onChange={(e) => setValue(e.target.value)}
+        value={value}
+      />
+
+      {showAlert && (
+        <Portal>
+          {/* Overlay wrapper */}
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/20">
+            {/* Alert box itself */}
+            <Alert
+              className="w-full max-w-md rounded-lg shadow-lg"
+              variant="destructive"
+              appearance="light"
+              close={false}
+            >
+              <AlertIcon>
+                <RiAlertFill />
+              </AlertIcon>
+              <AlertContent className="flex-1">
+                <AlertTitle>Warning! Changes will be made</AlertTitle>
+                <AlertDescription>
+                  <p>Are you sure you want to change the value of this cell?</p>
+                  <div className="space-x-3.5 flex justify-end mt-4">
+                    <Button
+                      onClick={handleProceed}
+                      variant="destructive"
+                      size="md"
+                    >
+                      Proceed
+                    </Button>
+                    <Button
+                      onClick={handleCancel}
+                      variant="secondary"
+                      size="md"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </AlertContent>
+            </Alert>
+          </div>
+        </Portal>
+      )}
+    </Fragment>
   );
-};
+}
 
 export default EditableCell;

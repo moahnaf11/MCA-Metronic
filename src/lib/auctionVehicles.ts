@@ -7,7 +7,6 @@ type Emirate = 'Dubai' | 'Sharjah';
 export interface AuctionVehicle {
   id: number;
   owner: string;
-  auctionId: number;
   vin: string;
   make: string;
   model: string;
@@ -35,14 +34,20 @@ function generateAuctionVehicle(id: number): AuctionVehicle {
   return {
     id,
     owner: faker.person.fullName(),
-    auctionId: faker.number.int({ min: 1000, max: 9999 }),
     vin: faker.vehicle.vin(),
     make: faker.vehicle.manufacturer(),
     model: faker.vehicle.model(),
     year: faker.date
       .between({ from: new Date('2015-01-01'), to: new Date('2023-12-31') })
       .getFullYear(),
-    color: faker.color.human(),
+    color: faker.helpers.arrayElement([
+      'WHITE',
+      'BLACK',
+      'SILVER',
+      'BLUE',
+      'RED',
+      'GRAY',
+    ] as const),
     buyNow: false,
     auction: null,
     soldPrice: 0,
@@ -65,3 +70,55 @@ export const auctionEligibleVehicles: AuctionVehicle[] = Array.from(
   { length: 75 },
   (_, i) => generateAuctionVehicle(i + 1),
 );
+
+// generate CSV
+export function generateVehicleCSV(vehicles: AuctionVehicle[]): string {
+  const headers = [
+    'id',
+    'make',
+    'model',
+    'year',
+    'color',
+    'vin',
+    'mileage',
+    'condition',
+    'estimated value',
+    'reserve price',
+    'description',
+    'lot number',
+  ];
+
+  const rows = vehicles.map((v, idx) => [
+    v.id,
+    v.make,
+    v.model,
+    v.year.toString(),
+    v.color,
+    v.vin,
+    faker.number.int({ min: 10000, max: 200000 }).toString(), // Mileage
+    faker.helpers.arrayElement(['Excellent', 'Good', 'Fair', 'Poor']),
+    faker.number.int({ min: 10000, max: 50000 }).toString(), // Estimated Value
+    faker.number.int({ min: 5000, max: 40000 }).toString(), // Reserve Price
+    faker.commerce.productDescription(),
+    `LOT-${idx + 1}`,
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) => row.map((val) => `"${val}"`).join(','))
+    .join('\n');
+
+  return csvContent;
+}
+
+// download csv
+export function downloadCSV(csv: string, filename = 'vehicles.csv') {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export const csv = generateVehicleCSV(auctionEligibleVehicles);
