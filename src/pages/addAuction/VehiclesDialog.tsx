@@ -9,11 +9,13 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   PaginationState,
+  Row,
   SortingState,
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
 import { AuctionVehicle } from '@/lib/auctionVehicles';
+import highlightMatch from '@/lib/dataFilters';
 import { Button } from '@/components/ui/button';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridColumnHeader } from '@/components/ui/data-grid-column-header';
@@ -27,6 +29,7 @@ import DialogContent, {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import EditableCell from '../../lib/EditableCell';
 import EditableSelect from '../../lib/EditableSelect';
@@ -39,6 +42,7 @@ type VehiclesDialogProps = {
 };
 
 const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
+  const [globalFilter, setGlobalFilter] = useState(''); // For global search
   const direction = useDirection();
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -63,6 +67,25 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
     }
   };
 
+  const globalFilterFn = (
+    row: Row<AuctionVehicle>,
+    columnId,
+    filterValue: string,
+  ) => {
+    const searchableFields: (keyof AuctionVehicle)[] = [
+      'vin',
+      'year',
+      'make',
+      'model',
+      'color',
+    ];
+
+    return searchableFields.some((field) => {
+      const value = row.original[field];
+      return String(value).toLowerCase().includes(filterValue.toLowerCase());
+    });
+  };
+
   // Define columns for @tanstack/react-table
   const columns = useMemo<ColumnDef<AuctionVehicle, string>[]>(
     () => [
@@ -79,7 +102,7 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
         accessorKey: 'vin',
         id: 'vin',
         header: 'VIN',
-        cell: ({ row }) => row.original.vin,
+        cell: ({ row }) => highlightMatch(row.original.vin, globalFilter),
         enableSorting: false,
       },
       {
@@ -92,7 +115,8 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
             column={column}
           />
         ),
-        cell: (info) => info.getValue(),
+        cell: ({ row }) =>
+          highlightMatch(row.original.year.toString(), globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: true,
       },
@@ -100,25 +124,25 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
         accessorKey: 'make',
         id: 'make',
         header: 'Make',
-        cell: EditableCell,
+        cell: (ctx) => <EditableCell {...ctx} globalFilter={globalFilter} />,
         enableSorting: false,
       },
       {
         accessorKey: 'model',
         id: 'model',
         header: 'Model',
-        cell: EditableCell,
+        cell: (ctx) => <EditableCell {...ctx} globalFilter={globalFilter} />,
         enableSorting: false,
       },
       {
         accessorKey: 'color',
         id: 'color',
         header: 'Color',
-        cell: EditableSelect,
+        cell: (ctx) => <EditableSelect {...ctx} globalFilter={globalFilter} />,
         enableSorting: false,
       },
     ],
-    [],
+    [globalFilter],
   );
 
   const [columnOrder, setColumnOrder] = useState<string[]>(
@@ -133,12 +157,14 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
     state: {
       pagination,
       sorting,
+      globalFilter,
       columnOrder,
       columnVisibility,
     },
     onPaginationChange: setPagination,
     onColumnVisibilityChange: setColumnVisibility,
     onSortingChange: setSorting,
+    globalFilterFn,
     onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -164,7 +190,16 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
       >
         <DialogHeader className="flex flex-row justify-between items-center gap-3">
           <DialogTitle>Cars Table for Auction</DialogTitle>
-          <AddCarsDialog />
+          <div className="flex items-center gap-3">
+            <Input
+              type="text"
+              value={globalFilter ?? ''}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="vin, year"
+              className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full max-w-sm"
+            />
+            <AddCarsDialog />
+          </div>
         </DialogHeader>
         <ScrollArea className="overflow-y-auto">
           <DialogBody className="">
