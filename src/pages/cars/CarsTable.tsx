@@ -123,9 +123,7 @@ export default function CarsTable() {
         {cars.map((car) => (
           <TableRow key={car.lotId}>
             <TableCell>{car.makeModel}</TableCell>
-
-            <TableCell> {car.year}</TableCell>
-
+            <TableCell>{car.year}</TableCell>
             <TableCell onDoubleClick={() => handleDoubleClick(car.lotId, car.vin)} className="cursor-pointer">
               {editingVinId === car.lotId ? (
                 <input
