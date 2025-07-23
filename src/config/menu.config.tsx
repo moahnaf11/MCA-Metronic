@@ -72,7 +72,6 @@ export const MENU_SIDEBAR: MenuConfig = [
       { title: 'Sold Vehicles', path: '/sold-vehicles' },
       { title: 'Archived', path: '/archived' },
       { title: 'Auctions List', path: '/auctions-list' },
-      { title: 'Auction Management', path: '/auctions-create' },
     ],
   },
   { title: 'Form Page', path: '/form-page' },

@@ -25,7 +25,8 @@ import {
   // subMonths,
   // subYears,
 } from 'date-fns';
-import { CalendarIcon, FileText } from 'lucide-react';
+import { CalendarIcon, FileText, Plus } from 'lucide-react';
+import { Link } from 'react-router';
 import { DateRange } from 'react-day-picker';
 import {
   Auction,
@@ -482,10 +483,13 @@ const AuctionList = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex justify-between">
-        <div>
+        <div className=''>
           <h1 className="text-2xl font-bold mb-2">Auctions List</h1>
           <span>Manage and track auction lists</span>
         </div>
+        <Link to='/auctions/new' className='flex items-center'>
+          <Button type='button'><Plus /> New</Button>
+        </Link>
       </div>
 
       <div className="mb-4 flex justify-between">
