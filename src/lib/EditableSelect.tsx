@@ -17,8 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from './utils';
 
-function EditableSelect<TData>({ getValue }: CellContext<TData, string>) {
+function EditableSelect<TData>({
+  getValue,
+  globalFilter,
+}: CellContext<TData, string> & { globalFilter: string }) {
   const initialValue = getValue();
   const [value, setValue] = useState<string>('');
   const [open, setOpen] = useState(false);
@@ -59,7 +63,15 @@ function EditableSelect<TData>({ getValue }: CellContext<TData, string>) {
           }
         }}
       >
-        <SelectTrigger className="min-w-min">
+        <SelectTrigger
+          className={cn(
+            'min-w-min',
+            globalFilter &&
+              value.toLowerCase().includes(globalFilter.toLowerCase())
+              ? 'bg-yellow-100 border-yellow-500'
+              : '',
+          )}
+        >
           <SelectValue>{value}</SelectValue>
         </SelectTrigger>
         <SelectContent>

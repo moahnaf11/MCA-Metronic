@@ -11,8 +11,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
+import { cn } from './utils';
 
-function EditableCell<TData>({ cell }: CellContext<TData, string>) {
+function EditableCell<TData>({
+  cell,
+  globalFilter,
+}: CellContext<TData, string> & { globalFilter: string }) {
   const initialValue = cell.getValue();
   // const [showAlert, setShowAlert] = useState(false);
   const [value, setValue] = useState(initialValue);
@@ -52,7 +56,13 @@ function EditableCell<TData>({ cell }: CellContext<TData, string>) {
             setValue(initialValue);
           }
         }}
-        className="w-min"
+        className={cn(
+          'w-min',
+          globalFilter &&
+            value.toLowerCase().includes(globalFilter.toLowerCase())
+            ? 'bg-yellow-100 border-yellow-500'
+            : '',
+        )}
         onChange={(e) => setValue(e.target.value)}
         value={value}
       />

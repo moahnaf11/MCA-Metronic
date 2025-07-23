@@ -31,11 +31,21 @@ const AddCarsDialog = () => {
   const [open, setOpen] = useState(false);
   const direction = useDirection();
   const FormSchema = z.object({
-    vin: z.string().length(17, 'VIN must be 17 characters in length'),
-    year: z.string().length(4, 'Year must be 4 digits'),
-    make: z.string().min(1, 'Please provide make'),
-    model: z.string().min(1, 'Please provide model'),
-    color: z.string().min(1, 'Please provide color'),
+    vin: z
+      .string({ required_error: 'Please provide vin' })
+      .length(17, 'VIN must be 17 characters in length'),
+    year: z
+      .string({ required_error: 'Please provide year' })
+      .length(4, 'Year must be 4 digits'),
+    make: z
+      .string({ required_error: 'Please provide make' })
+      .min(1, 'Please provide make'),
+    model: z
+      .string({ required_error: 'Please provide model' })
+      .min(1, 'Please provide model'),
+    color: z
+      .string({ required_error: 'Please provide color' })
+      .min(1, 'Please provide color'),
   });
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
