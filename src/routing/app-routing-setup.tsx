@@ -120,6 +120,7 @@ export function AppRoutingSetup() {
           <Route path="/inventory/cars/add" element={<CarUpsert />} />
           <Route path="/inventory/cars/import" element={<CarsImport />} />
           <Route path="/inventory/cars/view/:id" element={<CarUpsert />} />
+          <Route path="/auctions/new" element={<CreateAuction />} />
           {/* Add your route */}
           <Route
             path="/public-profile/profiles/default/"
