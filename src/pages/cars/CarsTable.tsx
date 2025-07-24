@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash } from 'lucide-react';
 
 const initialCars = [
@@ -91,11 +84,7 @@ export default function CarsTable() {
   };
 
   const handleVinSave = (lotId: string) => {
-    setCars((prev) =>
-      prev.map((car) =>
-        car.lotId === lotId ? { ...car, vin: tempVin } : car
-      )
-    );
+    setCars((prev) => prev.map((car) => (car.lotId === lotId ? { ...car, vin: tempVin } : car)));
     setEditingVinId(null);
   };
 
@@ -109,7 +98,7 @@ export default function CarsTable() {
       const confirmSave = window.confirm('Do you want to save this VIN?');
       if (confirmSave) {
         handleVinSave(lotId);
-      }else{
+      } else {
         handleVinCancel();
       }
     } else if (e.key === 'Escape') {
@@ -135,17 +124,14 @@ export default function CarsTable() {
           <TableRow key={car.lotId}>
             <TableCell>{car.makeModel}</TableCell>
             <TableCell>{car.year}</TableCell>
-            <TableCell
-              onDoubleClick={() => handleDoubleClick(car.lotId, car.vin)}
-              className="cursor-pointer"
-            >
+            <TableCell onDoubleClick={() => handleDoubleClick(car.lotId, car.vin)} className="cursor-pointer">
               {editingVinId === car.lotId ? (
                 <input
                   value={tempVin}
                   onChange={handleVinChange}
                   onKeyDown={(e) => handleVinKeyDown(e, car.lotId)}
                   autoFocus
-                  className="border px-1 py-0.5 text-sm w-full"
+                  className="w-full border px-1 py-0.5 text-sm"
                 />
               ) : (
                 car.vin
@@ -157,8 +143,8 @@ export default function CarsTable() {
                   car.status === 'Available'
                     ? 'text-green-600'
                     : car.status === 'Sold'
-                    ? 'text-red-600'
-                    : 'text-yellow-600'
+                      ? 'text-red-600'
+                      : 'text-yellow-600'
                 }`}
               >
                 {car.status}
@@ -170,11 +156,7 @@ export default function CarsTable() {
               <Button type="button" size="sm">
                 <Edit />
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                className="bg-red-600 hover:bg-red-700"
-              >
+              <Button type="button" size="sm" className="bg-red-600 hover:bg-red-700">
                 <Trash />
               </Button>
             </TableCell>
