@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from 'react';
-import { CellContext } from '@tanstack/react-table';
+import { CellContext, Row } from '@tanstack/react-table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,8 +15,12 @@ import { cn } from './utils';
 
 function EditableCell<TData>({
   cell,
+  type = 'text',
   globalFilter,
-}: CellContext<TData, string> & { globalFilter: string }) {
+  updateRow,
+}: CellContext<TData, string> & { type?: string } & {
+  globalFilter?: string;
+} & { updateRow?: (newValue: string, row: Row<TData>) => void }) {
   const initialValue = cell.getValue();
   // const [showAlert, setShowAlert] = useState(false);
   const [value, setValue] = useState(initialValue);
@@ -27,6 +31,10 @@ function EditableCell<TData>({
   }, [initialValue]);
 
   const handleProceed = async () => {
+    if (type === 'number') {
+      updateRow?.(value, cell.row);
+    }
+
     // try {
     //   // Example API call
     //   await fetch('/api/update', {
@@ -49,6 +57,7 @@ function EditableCell<TData>({
   return (
     <Fragment>
       <Input
+        type={type}
         onBlur={() => {
           if (initialValue !== value) {
             setOpen(true);
@@ -57,10 +66,9 @@ function EditableCell<TData>({
           }
         }}
         className={cn(
-          'w-min',
-          globalFilter &&
-            value.toLowerCase().includes(globalFilter.toLowerCase())
-            ? 'bg-yellow-100 border-yellow-500'
+          'max-w-max',
+          globalFilter && value.toLowerCase().includes(globalFilter.toLowerCase())
+            ? 'border-yellow-500 bg-yellow-100'
             : '',
         )}
         onChange={(e) => setValue(e.target.value)}
@@ -76,9 +84,7 @@ function EditableCell<TData>({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel}>
-              Go Back
-            </AlertDialogCancel>
+            <AlertDialogCancel onClick={handleCancel}>Go Back</AlertDialogCancel>
             <AlertDialogAction onClick={handleProceed} variant="destructive">
               Proceed
             </AlertDialogAction>

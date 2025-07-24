@@ -39,9 +39,10 @@ type VehiclesDialogProps = {
   open: boolean;
   setOpen: (openstate: boolean) => void;
   parsedCars: AuctionVehicle[] | [];
+  updateRow: (newValue: string, row: Row<AuctionVehicle>) => void;
 };
 
-const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
+const VehiclesDialog = ({ open, setOpen, parsedCars, updateRow }: VehiclesDialogProps) => {
   const [globalFilter, setGlobalFilter] = useState(''); // For global search
   const direction = useDirection();
   const [pagination, setPagination] = useState<PaginationState>({
@@ -67,18 +68,8 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
     }
   };
 
-  const globalFilterFn = (
-    row: Row<AuctionVehicle>,
-    columnId,
-    filterValue: string,
-  ) => {
-    const searchableFields: (keyof AuctionVehicle)[] = [
-      'vin',
-      'year',
-      'make',
-      'model',
-      'color',
-    ];
+  const globalFilterFn = (row: Row<AuctionVehicle>, columnId, filterValue: string) => {
+    const searchableFields: (keyof AuctionVehicle)[] = ['vin', 'year', 'make', 'model', 'color'];
 
     return searchableFields.some((field) => {
       const value = row.original[field];
@@ -92,10 +83,8 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
       {
         accessorKey: 'id',
         id: 'id',
-        header: ({ column }) => (
-          <DataGridColumnHeader title="ID" visibility={true} column={column} />
-        ),
-        cell: ({ row }) => row.original.id,
+        header: ({ column }) => <DataGridColumnHeader title="ID" visibility={true} column={column} />,
+        cell: (ctx) => <EditableCell {...ctx} type="number" updateRow={updateRow} />,
         enableSorting: true,
       },
       {
@@ -108,15 +97,8 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
       {
         accessorKey: 'year',
         id: 'year',
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            title="Year"
-            visibility={true}
-            column={column}
-          />
-        ),
-        cell: ({ row }) =>
-          highlightMatch(row.original.year.toString(), globalFilter),
+        header: ({ column }) => <DataGridColumnHeader title="Year" visibility={true} column={column} />,
+        cell: ({ row }) => highlightMatch(row.original.year.toString(), globalFilter),
         filterFn: 'includesString', // 👈 THIS is the key
         enableSorting: true,
       },
@@ -142,12 +124,11 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
         enableSorting: false,
       },
     ],
-    [globalFilter],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [globalFilter, parsedCars],
   );
 
-  const [columnOrder, setColumnOrder] = useState<string[]>(
-    columns.map((column) => column.id as string),
-  );
+  const [columnOrder, setColumnOrder] = useState<string[]>(columns.map((column) => column.id as string));
 
   // Initialize the table using useReactTable
   const table = useReactTable<AuctionVehicle>({
@@ -183,12 +164,8 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
         }
       }}
     >
-      <DialogContent
-        close={false}
-        dir={direction}
-        className="min-w-max max-h-[90%]"
-      >
-        <DialogHeader className="flex flex-row justify-between items-center gap-3">
+      <DialogContent close={false} dir={direction} className="max-h-[90%] min-w-max">
+        <DialogHeader className="flex flex-row items-center justify-between gap-3">
           <DialogTitle>Cars Table for Auction</DialogTitle>
           <div className="flex items-center gap-3">
             <Input
@@ -196,7 +173,7 @@ const VehiclesDialog = ({ open, setOpen, parsedCars }: VehiclesDialogProps) => {
               value={globalFilter ?? ''}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="vin, year"
-              className="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-full max-w-sm"
+              className="w-full max-w-sm rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500"
             />
             <AddCarsDialog />
           </div>

@@ -14,31 +14,13 @@ import {
   VideoIcon,
 } from 'lucide-react';
 import { Link } from 'react-router';
-import { toAbsoluteUrl } from '@/lib/helpers';
+// import { toAbsoluteUrl } from '@/lib/helpers';
 import { cn } from '@/lib/utils';
-import {
-  formatBytes,
-  useFileUpload,
-  type FileMetadata,
-  type FileWithPreview,
-} from '@/hooks/use-file-upload';
-import {
-  Alert,
-  AlertContent,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-} from '@/components/ui/alert';
+import { formatBytes, useFileUpload, type FileMetadata, type FileWithPreview } from '@/hooks/use-file-upload';
+import { Alert, AlertContent, AlertDescription, AlertIcon, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface FileUploadItem extends FileWithPreview {
   progress: number;
@@ -65,39 +47,38 @@ export default function TableUpload({
   onFilesChange,
   simulateUpload = true,
 }: TableUploadProps) {
-  // Create default files using FileMetadata type
-  const defaultFiles: FileMetadata[] = [
-    {
-      id: 'default-doc-1',
-      name: 'document.pdf',
-      size: 529254,
-      type: 'application/pdf',
-      url: toAbsoluteUrl('/media/files/document.pdf'),
-    },
-    // {
-    //   id: 'default-doc-2',
-    //   name: 'intro.zip',
-    //   size: 252846,
-    //   type: 'application/zip',
-    //   url: toAbsoluteUrl('/media/files/intro.zip'),
-    // },
-  ];
+  // // Create default files using FileMetadata type
+  // const defaultFiles: FileMetadata[] = [
+  //   {
+  //     id: 'default-doc-1',
+  //     name: 'document.pdf',
+  //     size: 529254,
+  //     type: 'application/pdf',
+  //     url: toAbsoluteUrl('/media/files/document.pdf'),
+  //   },
+  //   // {
+  //   //   id: 'default-doc-2',
+  //   //   name: 'intro.zip',
+  //   //   size: 252846,
+  //   //   type: 'application/zip',
+  //   //   url: toAbsoluteUrl('/media/files/intro.zip'),
+  //   // },
+  // ];
 
-  // Convert default files to FileUploadItem format
-  const defaultUploadFiles: FileUploadItem[] = defaultFiles.map((file) => ({
-    id: file.id,
-    file: {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    } as File,
-    preview: file.url,
-    progress: 100,
-    status: 'completed' as const,
-  }));
+  // // Convert default files to FileUploadItem format
+  // const defaultUploadFiles: FileUploadItem[] = defaultFiles.map((file) => ({
+  //   id: file.id,
+  //   file: {
+  //     name: file.name,
+  //     size: file.size,
+  //     type: file.type,
+  //   } as File,
+  //   preview: file.url,
+  //   progress: 100,
+  //   status: 'completed' as const,
+  // }));
 
-  const [uploadFiles, setUploadFiles] =
-    useState<FileUploadItem[]>(defaultUploadFiles);
+  const [uploadFiles, setUploadFiles] = useState<FileUploadItem[]>([]);
 
   const [
     { isDragging, errors },
@@ -116,14 +97,12 @@ export default function TableUpload({
     maxSize,
     accept,
     multiple,
-    initialFiles: defaultFiles,
+    initialFiles: [],
     onFilesChange: (newFiles) => {
       // Convert to upload items when files change, preserving existing status
       const newUploadFiles = newFiles.map((file) => {
         // Check if this file already exists in uploadFiles
-        const existingFile = uploadFiles.find(
-          (existing) => existing.id === file.id,
-        );
+        const existingFile = uploadFiles.find((existing) => existing.id === file.id);
 
         if (existingFile) {
           // Preserve existing file status and progress
@@ -164,9 +143,7 @@ export default function TableUpload({
               ...file,
               progress: 100,
               status: shouldFail ? ('error' as const) : ('completed' as const),
-              error: shouldFail
-                ? 'Upload failed. Please try again.'
-                : undefined,
+              error: shouldFail ? 'Upload failed. Please try again.' : undefined,
             };
           }
 
@@ -204,12 +181,9 @@ export default function TableUpload({
     if (type.startsWith('video/')) return <VideoIcon className="size-4" />;
     if (type.startsWith('audio/')) return <HeadphonesIcon className="size-4" />;
     if (type.includes('pdf')) return <FileTextIcon className="size-4" />;
-    if (type.includes('word') || type.includes('doc'))
-      return <FileTextIcon className="size-4" />;
-    if (type.includes('excel') || type.includes('sheet'))
-      return <FileSpreadsheetIcon className="size-4" />;
-    if (type.includes('zip') || type.includes('rar'))
-      return <FileArchiveIcon className="size-4" />;
+    if (type.includes('word') || type.includes('doc')) return <FileTextIcon className="size-4" />;
+    if (type.includes('excel') || type.includes('sheet')) return <FileSpreadsheetIcon className="size-4" />;
+    if (type.includes('zip') || type.includes('rar')) return <FileArchiveIcon className="size-4" />;
     return <FileTextIcon className="size-4" />;
   };
 
@@ -247,13 +221,11 @@ export default function TableUpload({
         <div className="flex flex-col items-center gap-4">
           <div
             className={cn(
-              'flex h-12 w-12 items-center justify-center rounded-full bg-muted transition-colors',
-              isDragging
-                ? 'border-primary bg-primary/10'
-                : 'border-muted-foreground/25',
+              'bg-muted flex h-12 w-12 items-center justify-center rounded-full transition-colors',
+              isDragging ? 'border-primary bg-primary/10' : 'border-muted-foreground/25',
             )}
           >
-            <Upload className="h-5 w-5 text-muted-foreground" />
+            <Upload className="text-muted-foreground h-5 w-5" />
           </div>
 
           <div className="space-y-2">
@@ -262,14 +234,13 @@ export default function TableUpload({
               <button
                 type="button"
                 onClick={openFileDialog}
-                className="cursor-pointer text-primary underline-offset-4 hover:underline"
+                className="text-primary cursor-pointer underline-offset-4 hover:underline"
               >
                 browse files
               </button>
             </p>
-            <p className="text-xs text-muted-foreground">
-              Maximum file size: {formatBytes(maxSize)} • Maximum files:{' '}
-              {maxFiles}
+            <p className="text-muted-foreground text-xs">
+              Maximum file size: {formatBytes(maxSize)} • Maximum files: {maxFiles}
             </p>
           </div>
         </div>
@@ -279,9 +250,7 @@ export default function TableUpload({
       {uploadFiles.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">
-              Files ({uploadFiles.length})
-            </h3>
+            <h3 className="text-sm font-medium">Files ({uploadFiles.length})</h3>
             <div className="flex gap-2">
               <Button onClick={openFileDialog} variant="outline" size="sm">
                 <CloudUpload />
@@ -301,9 +270,7 @@ export default function TableUpload({
                   <TableHead className="h-9">Name</TableHead>
                   <TableHead className="h-9">Type</TableHead>
                   <TableHead className="h-9">Size</TableHead>
-                  <TableHead className="h-9 w-[100px] text-end">
-                    Actions
-                  </TableHead>
+                  <TableHead className="h-9 w-[100px] text-end">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -313,16 +280,13 @@ export default function TableUpload({
                       <div className="flex items-center gap-1">
                         <div
                           className={cn(
-                            'size-8 shrink-0 relative flex items-center justify-center text-muted-foreground/80',
+                            'text-muted-foreground/80 relative flex size-8 shrink-0 items-center justify-center',
                           )}
                         >
                           {fileItem.status === 'uploading' ? (
                             <div className="relative">
                               {/* Circular progress background */}
-                              <svg
-                                className="size-8 -rotate-90"
-                                viewBox="0 0 32 32"
-                              >
+                              <svg className="size-8 -rotate-90" viewBox="0 0 32 32">
                                 <circle
                                   cx="16"
                                   cy="16"
@@ -360,11 +324,7 @@ export default function TableUpload({
                         <p className="flex items-center gap-1 truncate text-sm font-medium">
                           {fileItem.file.name}
                           {fileItem.status === 'error' && (
-                            <Badge
-                              variant="destructive"
-                              size="sm"
-                              appearance="light"
-                            >
+                            <Badge variant="destructive" size="sm" appearance="light">
                               Error
                             </Badge>
                           )}
@@ -376,18 +336,13 @@ export default function TableUpload({
                         {getFileTypeLabel(fileItem.file)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="py-2 text-sm text-muted-foreground">
+                    <TableCell className="text-muted-foreground py-2 text-sm">
                       {formatBytes(fileItem.file.size)}
                     </TableCell>
                     <TableCell className="py-2 pe-1">
                       <div className="flex items-center gap-1">
                         {fileItem.preview && (
-                          <Button
-                            variant="dim"
-                            size="icon"
-                            className="size-8"
-                            asChild
-                          >
+                          <Button variant="dim" size="icon" className="size-8" asChild>
                             <Link to={fileItem.preview} target="_blank">
                               <Download className="size-3.5" />
                             </Link>
@@ -398,7 +353,7 @@ export default function TableUpload({
                             onClick={() => retryUpload(fileItem.id)}
                             variant="dim"
                             size="icon"
-                            className="size-8 text-destructive/80 hover:text-destructive"
+                            className="text-destructive/80 hover:text-destructive size-8"
                           >
                             <RefreshCwIcon className="size-3.5" />
                           </Button>
