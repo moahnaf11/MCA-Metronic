@@ -1,38 +1,19 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Row } from '@tanstack/react-table';
 import { addDays, format } from 'date-fns';
-import {
-  BookUser,
-  CalendarIcon,
-  Check,
-  CreditCard,
-  ListTodo,
-  LoaderCircleIcon,
-  X,
-} from 'lucide-react';
+import { BookUser, CalendarIcon, Check, CreditCard, ListTodo, LoaderCircleIcon, X } from 'lucide-react';
 import Papa from 'papaparse';
 import { FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { AuctionVehicle, csv, downloadCSV } from '@/lib/auctionVehicles';
 import { combineDateTime } from '@/lib/LocalDateTime';
 import { FileWithPreview } from '@/hooks/use-file-upload';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
@@ -165,16 +146,7 @@ export default function CreateAuction() {
   const handleNext = async () => {
     // Define fields to validate based on the current step
     const fieldsPerStep: Record<number, (keyof z.infer<typeof schema>)[]> = {
-      1: [
-        'date',
-        'time',
-        'index',
-        'name',
-        'emirate',
-        'location',
-        'enddate',
-        'endtime',
-      ],
+      1: ['date', 'time', 'index', 'name', 'emirate', 'location', 'enddate', 'endtime'],
       2: [],
     };
 
@@ -212,11 +184,49 @@ export default function CreateAuction() {
     });
   }, [uploadedFiles]);
 
+  // update row order
+  function updateRow(newValue: string, row: Row<AuctionVehicle>) {
+    const rowIndex = row.index;
+    const currentRow = row.original;
+
+    setParsedCars((prevCars) => {
+      const total = prevCars.length;
+      const newId = parseInt(newValue);
+
+      if (isNaN(newId) || newId < 1 || newId > total) {
+        return prevCars; // Invalid input, do nothing
+      }
+
+      if (newId === currentRow.id) {
+        return prevCars; // No change
+      }
+
+      const withoutCurrent = prevCars.filter((_, idx) => idx !== rowIndex);
+      const insertIndex = newId - 1;
+
+      const updated = [
+        ...withoutCurrent.slice(0, insertIndex),
+        currentRow,
+        ...withoutCurrent.slice(insertIndex),
+      ];
+
+      // Only update affected range
+      const start = Math.min(rowIndex, insertIndex);
+      const end = Math.max(rowIndex, insertIndex);
+
+      for (let i = start; i <= end; i++) {
+        updated[i].id = i + 1;
+      }
+      console.log('updated', updated);
+      return updated;
+    });
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex justify-between">
         <div>
-          <h1 className="text-2xl font-bold mb-2">Create Auctions</h1>
+          <h1 className="mb-2 text-2xl font-bold">Create Auctions</h1>
           <span>Create Auctions</span>
         </div>
       </div>
@@ -233,25 +243,22 @@ export default function CreateAuction() {
             className="space-y-8"
           >
             <StepperNav>
-        {steps.map((step, index) => (
-          <StepperItem key={index} step={index + 1} className="relative flex-1 items-start">
-            <StepperTrigger className="flex flex-col gap-2.5">
-              <StepperIndicator>{index + 1}</StepperIndicator>
-              <StepperTitle>{step.title}</StepperTitle>
-            </StepperTrigger>
-            {steps.length > index + 1 && (
-              <StepperSeparator className="absolute top-3 inset-x-0 left-[calc(50%+0.875rem)] m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2rem+0.225rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none group-data-[state=completed]/step:bg-primary" />
-            )}
-          </StepperItem>
-        ))}
-      </StepperNav>
+              {steps.map((step, index) => (
+                <StepperItem key={index} step={index + 1} className="relative flex-1 items-start">
+                  <StepperTrigger className="flex flex-col gap-2.5">
+                    <StepperIndicator>{index + 1}</StepperIndicator>
+                    <StepperTitle>{step.title}</StepperTitle>
+                  </StepperTrigger>
+                  {steps.length > index + 1 && (
+                    <StepperSeparator className="group-data-[state=completed]/step:bg-primary absolute inset-x-0 top-3 left-[calc(50%+0.875rem)] m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2rem+0.225rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none" />
+                  )}
+                </StepperItem>
+              ))}
+            </StepperNav>
 
             {/* StepperContent */}
             <StepperPanel className="text-sm">
-              <StepperContent
-                className="flex max-w-[50%] flex-col gap-6"
-                value={1}
-              >
+              <StepperContent className="flex max-w-[50%] flex-col gap-6" value={1}>
                 <FormField
                   name="index"
                   render={({ field }) => (
@@ -277,22 +284,13 @@ export default function CreateAuction() {
                             <Popover>
                               <PopoverTrigger asChild>
                                 <div className="relative w-[250px]">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    mode="input"
-                                    className="w-full"
-                                  >
+                                  <Button type="button" variant="outline" mode="input" className="w-full">
                                     <CalendarIcon />
                                     {field.value || methods.watch('time') ? (
                                       <span>
-                                        {field.value
-                                          ? format(field.value, 'PPP')
-                                          : 'Pick a date'}
+                                        {field.value ? format(field.value, 'PPP') : 'Pick a date'}
                                         {' - '}
-                                        {methods.watch('time')
-                                          ? methods.watch('time')
-                                          : 'Pick a time'}
+                                        {methods.watch('time') ? methods.watch('time') : 'Pick a time'}
                                       </span>
                                     ) : (
                                       <span>Pick a date and time</span>
@@ -303,7 +301,7 @@ export default function CreateAuction() {
                                       type="button"
                                       variant="dim"
                                       size="sm"
-                                      className="absolute top-1/2 -end-0 -translate-y-1/2"
+                                      className="absolute -end-0 top-1/2 -translate-y-1/2"
                                       onClick={(e) => {
                                         e.preventDefault();
                                         methods.setValue('date', '', {
@@ -319,24 +317,14 @@ export default function CreateAuction() {
                                   )}
                                 </div>
                               </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
+                              <PopoverContent className="w-auto p-0" align="start">
                                 <div className="flex max-sm:flex-col">
                                   <Calendar
                                     mode="single"
-                                    selected={
-                                      field.value
-                                        ? new Date(field.value)
-                                        : undefined
-                                    }
+                                    selected={field.value ? new Date(field.value) : undefined}
                                     onSelect={(date) => {
                                       if (!date) return;
-                                      const dateOnly = format(
-                                        date,
-                                        'yyyy-MM-dd',
-                                      ); // Local time format
+                                      const dateOnly = format(date, 'yyyy-MM-dd'); // Local time format
                                       methods.setValue('date', dateOnly, {
                                         shouldValidate: true,
                                       });
@@ -350,30 +338,23 @@ export default function CreateAuction() {
                                       <ScrollArea className="h-full sm:border-s">
                                         <div className="space-y-3">
                                           <div className="grid gap-1.5 px-5 max-sm:grid-cols-2">
-                                            {timeSlots.map(
-                                              ({
-                                                time: timeSlot,
-                                                available,
-                                              }) => (
-                                                <Button
-                                                  key={timeSlot}
-                                                  variant="primary"
-                                                  size="sm"
-                                                  className="w-full"
-                                                  onClick={() => {
-                                                    methods.setValue(
-                                                      'time',
-                                                      timeSlot,
-                                                      { shouldValidate: true },
-                                                    );
-                                                    methods.trigger('enddate');
-                                                  }}
-                                                  disabled={!available}
-                                                >
-                                                  {timeSlot}
-                                                </Button>
-                                              ),
-                                            )}
+                                            {timeSlots.map(({ time: timeSlot, available }) => (
+                                              <Button
+                                                key={timeSlot}
+                                                variant="primary"
+                                                size="sm"
+                                                className="w-full"
+                                                onClick={() => {
+                                                  methods.setValue('time', timeSlot, {
+                                                    shouldValidate: true,
+                                                  });
+                                                  methods.trigger('enddate');
+                                                }}
+                                                disabled={!available}
+                                              >
+                                                {timeSlot}
+                                              </Button>
+                                            ))}
                                           </div>
                                         </div>
                                       </ScrollArea>
@@ -389,7 +370,7 @@ export default function CreateAuction() {
                             {timeError && (
                               <div
                                 data-slot="form-message"
-                                className="-mt-0.5 text-xs font-normal text-destructive"
+                                className="text-destructive -mt-0.5 text-xs font-normal"
                               >
                                 {timeError}
                               </div>
@@ -404,8 +385,7 @@ export default function CreateAuction() {
                     control={methods.control}
                     name="enddate"
                     render={({ field }) => {
-                      const timeError =
-                        methods.formState.errors.endtime?.message;
+                      const timeError = methods.formState.errors.endtime?.message;
                       return (
                         <FormItem>
                           <FormLabel>Auction End Date & Time</FormLabel>
@@ -413,34 +393,24 @@ export default function CreateAuction() {
                             <Popover>
                               <PopoverTrigger asChild>
                                 <div className="relative w-[250px]">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    mode="input"
-                                    className="w-full"
-                                  >
+                                  <Button type="button" variant="outline" mode="input" className="w-full">
                                     <CalendarIcon />
                                     {field.value || methods.watch('endtime') ? (
                                       <span>
-                                        {field.value
-                                          ? format(field.value, 'PPP')
-                                          : 'Pick a date'}
+                                        {field.value ? format(field.value, 'PPP') : 'Pick a date'}
                                         {' - '}
-                                        {methods.watch('endtime')
-                                          ? methods.watch('endtime')
-                                          : 'Pick a time'}
+                                        {methods.watch('endtime') ? methods.watch('endtime') : 'Pick a time'}
                                       </span>
                                     ) : (
                                       <span>Pick a date and time</span>
                                     )}
                                   </Button>
-                                  {(field.value ||
-                                    methods.watch('endtime')) && (
+                                  {(field.value || methods.watch('endtime')) && (
                                     <Button
                                       type="button"
                                       variant="dim"
                                       size="sm"
-                                      className="absolute top-1/2 -end-0 -translate-y-1/2"
+                                      className="absolute -end-0 top-1/2 -translate-y-1/2"
                                       onClick={(e) => {
                                         e.preventDefault();
                                         methods.setValue('enddate', '', {
@@ -456,24 +426,14 @@ export default function CreateAuction() {
                                   )}
                                 </div>
                               </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
+                              <PopoverContent className="w-auto p-0" align="start">
                                 <div className="flex max-sm:flex-col">
                                   <Calendar
                                     mode="single"
-                                    selected={
-                                      field.value
-                                        ? new Date(field.value)
-                                        : undefined
-                                    }
+                                    selected={field.value ? new Date(field.value) : undefined}
                                     onSelect={(date) => {
                                       if (!date) return;
-                                      const dateOnly = format(
-                                        date,
-                                        'yyyy-MM-dd',
-                                      ); // Local time format
+                                      const dateOnly = format(date, 'yyyy-MM-dd'); // Local time format
                                       methods.setValue('enddate', dateOnly, {
                                         shouldValidate: true,
                                       });
@@ -490,30 +450,23 @@ export default function CreateAuction() {
                                       <ScrollArea className="h-full sm:border-s">
                                         <div className="space-y-3">
                                           <div className="grid gap-1.5 px-5 max-sm:grid-cols-2">
-                                            {timeSlots.map(
-                                              ({
-                                                time: timeSlot,
-                                                available,
-                                              }) => (
-                                                <Button
-                                                  key={timeSlot}
-                                                  variant="primary"
-                                                  size="sm"
-                                                  className="w-full"
-                                                  onClick={() => {
-                                                    methods.setValue(
-                                                      'endtime',
-                                                      timeSlot,
-                                                      { shouldValidate: true },
-                                                    );
-                                                    methods.trigger('enddate');
-                                                  }}
-                                                  disabled={!available}
-                                                >
-                                                  {timeSlot}
-                                                </Button>
-                                              ),
-                                            )}
+                                            {timeSlots.map(({ time: timeSlot, available }) => (
+                                              <Button
+                                                key={timeSlot}
+                                                variant="primary"
+                                                size="sm"
+                                                className="w-full"
+                                                onClick={() => {
+                                                  methods.setValue('endtime', timeSlot, {
+                                                    shouldValidate: true,
+                                                  });
+                                                  methods.trigger('enddate');
+                                                }}
+                                                disabled={!available}
+                                              >
+                                                {timeSlot}
+                                              </Button>
+                                            ))}
                                           </div>
                                         </div>
                                       </ScrollArea>
@@ -529,7 +482,7 @@ export default function CreateAuction() {
                             {timeError && (
                               <div
                                 data-slot="form-message"
-                                className="-mt-0.5 text-xs font-normal text-destructive"
+                                className="text-destructive -mt-0.5 text-xs font-normal"
                               >
                                 {timeError}
                               </div>
@@ -586,29 +539,21 @@ export default function CreateAuction() {
                                 <SelectValue placeholder="Select Location" />
                               </SelectTrigger>
                               <SelectContent>
-                                {(!selectedEmirate ||
-                                  selectedEmirate === 'Dubai') && (
+                                {(!selectedEmirate || selectedEmirate === 'Dubai') && (
                                   <SelectGroup>
                                     <SelectLabel>Dubai</SelectLabel>
-                                    <SelectItem value="alquoz">
-                                      Al Quoz
-                                    </SelectItem>
+                                    <SelectItem value="alquoz">Al Quoz</SelectItem>
                                   </SelectGroup>
                                 )}
                                 <SelectSeparator />
-                                {(!selectedEmirate ||
-                                  selectedEmirate === 'Sharjah') && (
+                                {(!selectedEmirate || selectedEmirate === 'Sharjah') && (
                                   <SelectGroup>
                                     <SelectLabel>Sharjah</SelectLabel>
-                                    <SelectItem value="ia2">
-                                      247 BMW Road, Industrial Area 2
-                                    </SelectItem>
+                                    <SelectItem value="ia2">247 BMW Road, Industrial Area 2</SelectItem>
                                     <SelectItem value="sah">
                                       801/294 Souq Al Haraj, Auto Village, E311
                                     </SelectItem>
-                                    <SelectItem value="ia12">
-                                      Industrial Area 12 Branch
-                                    </SelectItem>
+                                    <SelectItem value="ia12">Industrial Area 12 Branch</SelectItem>
                                   </SelectGroup>
                                 )}
                               </SelectContent>
@@ -642,19 +587,13 @@ export default function CreateAuction() {
                   maxFiles={1}
                   onFilesChange={(files) => setUploadedFiles(files)}
                 />
-                <VehiclesDialog
-                  open={open}
-                  setOpen={setOpen}
-                  parsedCars={parsedCars}
-                />
+                <VehiclesDialog open={open} setOpen={setOpen} parsedCars={parsedCars} updateRow={updateRow} />
               </StepperContent>
 
               <StepperContent value={3}>
                 <div className="text-left">
-                  <h2 className="text-lg font-semibold mb-4">Preview:</h2>
-                  <pre className="bg-muted p-4 rounded">
-                    {JSON.stringify(methods.getValues(), null, 2)}
-                  </pre>
+                  <h2 className="mb-4 text-lg font-semibold">Preview:</h2>
+                  <pre className="bg-muted rounded p-4">{JSON.stringify(methods.getValues(), null, 2)}</pre>
                 </div>
               </StepperContent>
             </StepperPanel>
@@ -670,10 +609,7 @@ export default function CreateAuction() {
               <Button
                 variant="outline"
                 onClick={handleNext}
-                disabled={
-                  currentStep === steps.length ||
-                  (currentStep === 2 && uploadedFiles.length === 0)
-                }
+                disabled={currentStep === steps.length || (currentStep === 2 && uploadedFiles.length === 0)}
               >
                 Next
               </Button>
